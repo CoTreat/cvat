@@ -18,6 +18,8 @@ CAP_TASKS_IN_ORG_PROJECT = "TASKS_IN_ORG_PROJECT"
 CAP_ORG_CLOUD_STORAGES = "ORG_CLOUD_STORAGES"
 CAP_ORG_COMMON_WEBHOOKS = "ORG_COMMON_WEBHOOKS"
 CAP_PROJECT_WEBHOOKS = "PROJECT_WEBHOOKS"
+CAP_USER_SANDBOX_FUNCTIONS = "USER_SANDBOX_FUNCTIONS"
+CAP_ORG_FUNCTIONS = "ORG_FUNCTIONS"
 
 
 check_limit_exceeded(current, max) {
@@ -101,6 +103,20 @@ problems contains "cloud storages per organization" if {
     check_limit_exceeded(
         input.resource.limits[CAP_ORG_CLOUD_STORAGES].used,
         input.resource.limits[CAP_ORG_CLOUD_STORAGES].max
+    )
+}
+
+problems contains "functions per user" if {
+    check_limit_exceeded(
+        input.resource.limits[CAP_USER_SANDBOX_FUNCTIONS].used,
+        input.resource.limits[CAP_USER_SANDBOX_FUNCTIONS].max
+    )
+}
+
+problems contains "functions per organization" if {
+    check_limit_exceeded(
+        input.resource.limits[CAP_ORG_FUNCTIONS].used,
+        input.resource.limits[CAP_ORG_FUNCTIONS].max
     )
 }
 
