@@ -5,10 +5,11 @@
 import _cvat from 'cvat-core/src/api';
 import ObjectState from 'cvat-core/src/object-state';
 import Webhook from 'cvat-core/src/webhook';
+import MLModel from 'cvat-core/src/ml-model';
 import {
     Label, Attribute, RawAttribute, RawLabel,
 } from 'cvat-core/src/labels';
-import { ShapeType, LabelType } from 'cvat-core/src/enums';
+import { ShapeType, LabelType, ModelType } from 'cvat-core/src/enums';
 import { Storage, StorageData } from 'cvat-core/src/storage';
 import { SocialAuthMethods, SocialAuthMethod } from 'cvat-core/src/auth-methods';
 
@@ -33,6 +34,8 @@ export {
     Storage,
     Webhook,
     SocialAuthMethod,
+    MLModel,
+    ModelType,
 };
 
 export type {

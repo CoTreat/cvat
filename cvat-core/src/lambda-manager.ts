@@ -18,11 +18,9 @@ class LambdaManager {
     }
 
     async list(): Promise<MLModel[]> {
-        if (Array.isArray(this.cachedList)) {
-            return [...this.cachedList];
-        }
-
-        const result = await serverProxy.lambda.list();
+        const lambdaFunctions = await serverProxy.lambda.list();
+        const functions = await serverProxy.functions.list();
+        const result = [...lambdaFunctions, ...functions];
         const models = [];
 
         for (const model of result) {
@@ -59,7 +57,12 @@ class LambdaManager {
             function: model.id,
         };
 
-        const result = await serverProxy.lambda.run(body);
+        let result;
+        if (model.provider === 'cvat') {
+            result = await serverProxy.lambda.run(body);
+        } else {
+            result = await serverProxy.functions.run(body);
+        }
         return result.id;
     }
 
@@ -73,32 +76,59 @@ class LambdaManager {
             task: taskID,
         };
 
-        const result = await serverProxy.lambda.call(model.id, body);
+        let result;
+        if (model.provider === 'cvat') {
+            result = await serverProxy.lambda.call(model.id, body);
+        } else {
+            result = await serverProxy.functions.call(model.id, body);
+        }
         return result;
     }
 
     async requests() {
-        const result = await serverProxy.lambda.requests();
+        const lambdaRequests = await serverProxy.lambda.requests();
+        const functionsRequests = await serverProxy.functions.requests();
+        const result = [...lambdaRequests, ...functionsRequests];
         return result.filter((request) => ['queued', 'started'].includes(request.status));
     }
 
-    async cancel(requestID): Promise<void> {
+    async cancel(requestID, functionID): Promise<void> {
         if (typeof requestID !== 'string') {
             throw new ArgumentError(`Request id argument is required to be a string. But got ${requestID}`);
+        }
+        const model = this.cachedList.find((_model) => _model.id === functionID);
+        if (!model) {
+            throw new ArgumentError('Incorrect Function Id provided');
         }
 
         if (this.listening[requestID]) {
             clearTimeout(this.listening[requestID].timeout);
             delete this.listening[requestID];
         }
-        await serverProxy.lambda.cancel(requestID);
+
+        const { provider } = model;
+        if (provider === 'cvat') {
+            await serverProxy.lambda.cancel(requestID);
+        } else {
+            await serverProxy.functions.cancel(requestID);
+        }
     }
 
-    async listen(requestID, onUpdate): Promise<void> {
+    async listen(requestID, functionID, onUpdate): Promise<void> {
+        const model = this.cachedList.find((_model) => _model.id === functionID);
+        if (!model) {
+            throw new ArgumentError('Incorrect Function Id provided');
+        }
+        const { provider } = model;
         const timeoutCallback = async (): Promise<void> => {
             try {
                 this.listening[requestID].timeout = null;
-                const response = await serverProxy.lambda.status(requestID);
+                let response = null;
+                if (provider === 'cvat') {
+                    response = await serverProxy.lambda.status(requestID);
+                } else {
+                    response = await serverProxy.functions.status(requestID);
+                }
 
                 if (response.status === RQStatus.QUEUED || response.status === RQStatus.STARTED) {
                     onUpdate(response.status, response.progress || 0);
@@ -123,6 +153,7 @@ class LambdaManager {
 
         this.listening[requestID] = {
             onUpdate,
+            functionID,
             timeout: setTimeout(timeoutCallback, 2000),
         };
     }

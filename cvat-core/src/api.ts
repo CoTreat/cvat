@@ -190,16 +190,22 @@ function build() {
                 const result = await PluginRegistry.apiWrapper(cvat.lambda.call, task, model, args);
                 return result;
             },
-            async cancel(requestID) {
-                const result = await PluginRegistry.apiWrapper(cvat.lambda.cancel, requestID);
+            async cancel(requestID, functionID) {
+                const result = await PluginRegistry.apiWrapper(cvat.lambda.cancel, requestID, functionID);
                 return result;
             },
-            async listen(requestID, onChange) {
-                const result = await PluginRegistry.apiWrapper(cvat.lambda.listen, requestID, onChange);
+            async listen(requestID, functionID, onChange) {
+                const result = await PluginRegistry.apiWrapper(cvat.lambda.listen, requestID, functionID, onChange);
                 return result;
             },
             async requests() {
                 const result = await PluginRegistry.apiWrapper(cvat.lambda.requests);
+                return result;
+            },
+        },
+        functions: {
+            async providers() {
+                const result = await PluginRegistry.apiWrapper(cvat.functions.providers);
                 return result;
             },
         },
@@ -305,6 +311,7 @@ function build() {
     cvat.enums = Object.freeze(cvat.enums);
     cvat.cloudStorages = Object.freeze(cvat.cloudStorages);
     cvat.organizations = Object.freeze(cvat.organizations);
+    cvat.functions = Object.freeze(cvat.functions);
 
     const implemented = Object.freeze(implementAPI(cvat));
     return implemented;
