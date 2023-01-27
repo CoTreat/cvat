@@ -112,6 +112,7 @@
     width: 25%;
     border-width: 4px;
     height: $grid-unit-size * 28;
+    overflow: hidden;
 
     .ant-card-meta-title {
         margin-bottom: 0 !important;
@@ -127,6 +128,10 @@
     font-size: 80px;
     text-align: center;
     height: $grid-unit-size * 18;
+
+    &:hover {
+        cursor: pointer;
+    }
 }
 
 .cvat-models-item-card-preview-wrapper {
@@ -134,6 +139,11 @@
     justify-content: center;
     align-items: center;
     height: $grid-unit-size * 18;
+    overflow: hidden;
+
+    &:hover {
+        cursor: pointer;
+    }
 }
 
 .cvat-model-item-provider {
@@ -211,4 +221,13 @@
     &:hover {
         cursor: pointer !important;
     }
+}
+
+.cvat-models-item-text-description {
+    max-width: 80%;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+    max-height: $grid-unit-size * 3;
+    display: inline;
 }

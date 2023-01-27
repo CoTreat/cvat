@@ -6,7 +6,7 @@
 import serverProxy from './server-proxy';
 import { ArgumentError } from './exceptions';
 import MLModel from './ml-model';
-import { RQStatus } from './enums';
+import { ModelProviders, RQStatus } from './enums';
 
 class LambdaManager {
     private listening: any;
@@ -18,7 +18,13 @@ class LambdaManager {
     }
 
     async list(): Promise<MLModel[]> {
-        const lambdaFunctions = await serverProxy.lambda.list();
+        let lambdaFunctions = [];
+        try {
+            // lambda.list returns error if list is empty, but we should work with models anyway
+            lambdaFunctions = await serverProxy.lambda.list();
+        // eslint-disable-next-line no-empty
+        } catch (error) {}
+
         const functions = await serverProxy.functions.list();
         const result = [...lambdaFunctions, ...functions];
         const models = [];
@@ -27,7 +33,6 @@ class LambdaManager {
             models.push(
                 new MLModel({
                     ...model,
-                    type: model.kind,
                 }),
             );
         }
@@ -58,7 +63,7 @@ class LambdaManager {
         };
 
         let result;
-        if (model.provider === 'cvat') {
+        if (model.provider === ModelProviders.CVAT) {
             result = await serverProxy.lambda.run(body);
         } else {
             result = await serverProxy.functions.run(body);
@@ -77,7 +82,7 @@ class LambdaManager {
         };
 
         let result;
-        if (model.provider === 'cvat') {
+        if (model.provider === ModelProviders.CVAT) {
             result = await serverProxy.lambda.call(model.id, body);
         } else {
             result = await serverProxy.functions.call(model.id, body);
@@ -107,7 +112,7 @@ class LambdaManager {
         }
 
         const { provider } = model;
-        if (provider === 'cvat') {
+        if (provider === ModelProviders.CVAT) {
             await serverProxy.lambda.cancel(requestID);
         } else {
             await serverProxy.functions.cancel(requestID);
@@ -124,7 +129,7 @@ class LambdaManager {
             try {
                 this.listening[requestID].timeout = null;
                 let response = null;
-                if (provider === 'cvat') {
+                if (provider === ModelProviders.CVAT) {
                     response = await serverProxy.lambda.status(requestID);
                 } else {
                     response = await serverProxy.functions.status(requestID);
@@ -156,6 +161,14 @@ class LambdaManager {
             functionID,
             timeout: setTimeout(timeoutCallback, 2000),
         };
+    }
+
+    async providers(): Promise<any> {
+        const providersData = await serverProxy.functions.providers();
+        const providers = Object.entries(providersData).map(([provider, attributes]) => (
+            { name: provider, attributes }
+        ));
+        return providers;
     }
 }
 

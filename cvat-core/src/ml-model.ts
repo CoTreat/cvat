@@ -6,7 +6,7 @@
 import { isBrowser, isNode } from 'browser-or-node';
 import serverProxy from './server-proxy';
 import PluginRegistry from './plugins';
-import { ModelType } from './enums';
+import { ModelProviders, ModelType } from './enums';
 
 interface ModelAttribute {
     name: string;
@@ -36,7 +36,8 @@ interface SerializedModel {
     attributes?: Record<string, ModelAttribute>;
     framework?: string;
     description?: string;
-    type?: ModelType;
+    kind?: ModelType;
+    type?: string;
     owner?: any;
     provider?: string;
     api_key?: string;
@@ -87,7 +88,7 @@ export default class MLModel {
     }
 
     public get type(): ModelType {
-        return this.serialized.type;
+        return this.serialized.kind;
     }
 
     public get params(): ModelParams {
@@ -118,11 +119,11 @@ export default class MLModel {
     }
 
     public get provider(): string {
-        return this.serialized.provider ? this.serialized.provider : 'cvat';
+        return this.serialized.provider ? this.serialized.provider : ModelProviders.CVAT;
     }
 
     public get deletable(): boolean {
-        return this.provider !== 'cvat';
+        return this.provider !== ModelProviders.CVAT;
     }
 
     public get createdDate(): string {
@@ -152,7 +153,7 @@ export default class MLModel {
         return result;
     }
 
-    public async getPreview(): Promise<string | ArrayBuffer> {
+    public async getPreview(): Promise<string> {
         const result = await PluginRegistry.apiWrapper.call(this, MLModel.prototype.getPreview);
         return result;
     }
@@ -192,7 +193,7 @@ Object.defineProperties(MLModel.prototype.getPreview, {
         writable: false,
         enumerable: false,
         value: async function implementation(): Promise<string | ArrayBuffer> {
-            if (this.provider === 'cvat') {
+            if (this.provider === ModelProviders.CVAT) {
                 return '';
             }
             return new Promise((resolve, reject) => {

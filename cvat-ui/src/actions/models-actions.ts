@@ -100,7 +100,7 @@ export const modelsActions = {
     getModelPreview: (modelID: string) => (
         createAction(ModelsActionTypes.GET_MODEL_PREVIEW, { modelID })
     ),
-    getModelPreviewSuccess: (modelID: string, preview: ArrayBuffer | string) => (
+    getModelPreviewSuccess: (modelID: string, preview: string) => (
         createAction(ModelsActionTypes.GET_MODEL_PREVIEW_SUCCESS, { modelID, preview })
     ),
     getModelPreviewFailed: (modelID: string, error: any) => (
@@ -267,8 +267,7 @@ export function getModelProvidersAsync(): ThunkAction {
     return async function (dispatch) {
         dispatch(modelsActions.getModelProviders());
         try {
-            // TODO change it to lambda
-            const providers = await cvat.functions.providers();
+            const providers = await cvat.lambda.providers();
             dispatch(modelsActions.getModelProvidersSuccess(providers));
         } catch (error) {
             dispatch(modelsActions.getModelProvidersFailed(error));
