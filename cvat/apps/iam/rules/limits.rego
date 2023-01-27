@@ -106,20 +106,6 @@ problems contains "cloud storages per organization" if {
     )
 }
 
-problems contains "functions per user" if {
-    check_limit_exceeded(
-        input.resource.limits[CAP_USER_SANDBOX_FUNCTIONS].used,
-        input.resource.limits[CAP_USER_SANDBOX_FUNCTIONS].max
-    )
-}
-
-problems contains "functions per organization" if {
-    check_limit_exceeded(
-        input.resource.limits[CAP_ORG_FUNCTIONS].used,
-        input.resource.limits[CAP_ORG_FUNCTIONS].max
-    )
-}
-
 # In the case of invalid input or no applicable limits,
 # we deny the request. We suppose that we always check at least 1
 # limit, and this package is queried by IAM only when there are
