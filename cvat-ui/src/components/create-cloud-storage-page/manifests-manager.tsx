@@ -22,7 +22,7 @@ interface Props {
 
 export default function ManifestsManager(props: Props): JSX.Element {
     const { form, manifestNames, setManifestNames } = props;
-    const maxManifestsCount = useRef(5);
+    const maxManifestsCount = useRef(100);
     const [limitingAddingManifestNotification, setLimitingAddingManifestNotification] = useState(false);
     const { DATASET_MANIFEST_GUIDE_URL } = config;
 

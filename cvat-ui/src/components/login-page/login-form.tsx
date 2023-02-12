@@ -69,7 +69,7 @@ function LoginFormComponent(props: Props): JSX.Element {
                             <Col className='cvat-credentials-link'>
                                 <Text strong>
                                     New user?&nbsp;
-                                    <Link to='/auth/register'>Create an account</Link>
+                                    {/* <Link to='/auth/register'>Create an account</Link> */}
                                 </Text>
                             </Col>
                         </Row>
