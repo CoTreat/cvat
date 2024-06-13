@@ -1,11 +1,11 @@
 # Create a temporary directory
 TEMP_DIR=$(mktemp -d)
 
-# Load the zip file from Google Cloud Storage to the temporary directory
-gsutil cp gs://cotreat-cvat/deploy.zip $TEMP_DIR
+# Load the tar.gz file from Google Cloud Storage to the temporary directory
+gsutil cp gs://cotreat-cvat/deploy.tar.gz $TEMP_DIR
 
 # Unzip the file to the temporary directory
-unzip $TEMP_DIR/deploy.zip -d $TEMP_DIR
+tar -xzf $TEMP_DIR/deploy.tar.gz -C $TEMP_DIR
 
 # Sync the unzipped folder with the existing /cvat folder
 rsync -av --delete $TEMP_DIR/deploy/ /cvat/

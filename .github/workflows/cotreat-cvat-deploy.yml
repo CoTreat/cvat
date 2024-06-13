@@ -29,8 +29,8 @@ jobs:
         uses: google-github-actions/setup-gcloud@v2
       - name: Zip and upload code to cloud storage
         run: |
-          tar -czf deploy.tar.gz .
-          gsutil cp deploy.tar.gz gs://cotreat-cvat/deploy.tar.gz
+          tar -czf ../deploy.tar.gz .
+          gsutil cp ../deploy.tar.gz gs://cotreat-cvat/deploy.tar.gz
       # - name: Restart CVAT Compute Engine VM
       #   run: |
       #     gcloud compute instances stop cotreat-cvat
