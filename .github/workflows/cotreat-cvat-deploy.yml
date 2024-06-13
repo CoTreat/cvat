@@ -9,7 +9,7 @@ on:
 jobs:
   deploy:
     name: 'Deploy'
-    # if: github.event.pull_request.merged == true
+    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     permissions:
       contents: 'read'
@@ -31,7 +31,7 @@ jobs:
         run: |
           tar -czf ../deploy.tar.gz .
           gsutil cp ../deploy.tar.gz gs://cotreat-cvat/deploy.tar.gz
-      # - name: Restart CVAT Compute Engine VM
-      #   run: |
-      #     gcloud compute instances stop cotreat-cvat
-      #     gcloud compute instances start cotreat-cvat
+      - name: Restart CVAT Compute Engine VM
+        run: |
+          gcloud compute instances stop cotreat-cvat
+          gcloud compute instances start cotreat-cvat

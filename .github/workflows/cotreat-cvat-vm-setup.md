@@ -26,6 +26,19 @@ gcloud compute instances create cotreat-cvat \
     --reservation-affinity=any
 ```
 
+## Install Docker and other tools
+
+Follow https://docs.docker.com/engine/install/debian/ to install docker
+
+## Install rsync
+
+we use rsync to sync new deploy files with existing one:
+
+```
+sudo apt-get update
+sudo apt-get install rsync
+```
+
 ## Setup CVAT code
 
 Our current approach for deploy code to CVAT VM is:
