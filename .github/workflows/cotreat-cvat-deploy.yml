@@ -1,0 +1,37 @@
+name: Deployment to cvat.cotreat.io
+
+on:
+  pull_request:
+    types: ['opened', 'synchronize', 'reopened', 'closed']
+    branches:
+      - cotreat-deployment
+
+jobs:
+  deploy:
+    name: 'Deploy'
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+    env:
+      CLOUD_RUN_SERVER_ID: cotreat-ai-image-analysis
+    steps:
+      - uses: actions/checkout@v4
+      - name: 'Setup GCP Auth'
+        uses: 'google-github-actions/auth@v2'
+        with:
+          # https://cloud.google.com/iam/docs/configuring-workload-identity-federation
+          # https://cloud.google.com/blog/products/identity-security/enabling-keyless-authentication-from-github-actions
+          workload_identity_provider: projects/787270621701/locations/global/workloadIdentityPools/github-action/providers/github-action
+          service_account: github-cicd@cotreat-prod.iam.gserviceaccount.com
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+      - name: Zip and upload code to cloud storage
+        run: |
+          tar -czf ../deploy.tar.gz .
+          gsutil cp ../deploy.tar.gz gs://cotreat-cvat/deploy.tar.gz
+      - name: Restart CVAT Compute Engine VM
+        run: |
+          gcloud compute instances stop cotreat-cvat
+          gcloud compute instances start cotreat-cvat
