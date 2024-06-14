@@ -15,7 +15,8 @@ jobs:
       contents: 'read'
       id-token: 'write'
     env:
-      CLOUD_RUN_SERVER_ID: cotreat-ai-image-analysis
+      CVAT_INSTANCE_NAME: cotreat-cvat
+      CVAT_INSTANCE_ZONE: asia-southeast1-c
     steps:
       - uses: actions/checkout@v4
       - name: 'Setup GCP Auth'
@@ -31,7 +32,12 @@ jobs:
         run: |
           tar -czf ../deploy.tar.gz .
           gsutil cp ../deploy.tar.gz gs://cotreat-cvat/deploy.tar.gz
+      - name: Update startup script
+        run: |
+          gcloud compute instances add-metadata ${{ env.CVAT_INSTANCE_NAME }} \
+            --zone=${{ env.CVAT_INSTANCE_ZONE }} \
+            --metadata-from-file=startup-script=./.github/workflows/cotreat-cvat-startup-script.sh
       - name: Restart CVAT Compute Engine VM
         run: |
-          gcloud compute instances stop cotreat-cvat
-          gcloud compute instances start cotreat-cvat
+          gcloud compute instances stop cotreat-cvat --zone=${{ env.CVAT_INSTANCE_ZONE }}
+          gcloud compute instances start cotreat-cvat --zone=${{ env.CVAT_INSTANCE_ZONE }}
