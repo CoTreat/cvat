@@ -72,7 +72,7 @@ The default `docker-compose.yml` use CVAT's built image from docker, which means
 sudo -E docker compose -f docker-compose.yml -f docker-compose.dev.yml -f docker-compose.https.yml
 ```
 
-## Setup Https
+## Setup Https & Domain
 
 See https://docs.cvat.ai/docs/administration/basics/installation/#deploy-secure-cvat-instance-with-https
 
@@ -83,6 +83,38 @@ export CVAT_HOST=cvat.cotreat.io
 export ACME_EMAIL=engineering@cotreat.com.au
 ```
 
+## Setup Email Service
+
+see https://docs.cvat.ai/docs/administration/basics/installation/#email-verification, but basically the environments should be set in `cvat/settings/base.py`
+
+```
+EMAIL_USE_TLS = True
+# We are using Sengrid SMTP service
+# https://www.twilio.com/docs/sendgrid/for-developers/sending-email/integrating-with-the-smtp-api
+EMAIL_HOST = os.getenv('EMAIL_HOST')
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
+# todo not best practice to hardcode the sendgrid key here, consider putting in a secret manager
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
+EMAIL_PORT = os.getenv('EMAIL_PORT') or 587
+
+# Email backend settings for Django
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+```
+
+We will then pass them via `docker-compose.yml`:
+
+```
+cvat_server:
+    ...
+    environment:
+        ...
+        EMAIL_HOST: ${EMAIL_HOST}
+        EMAIL_HOST_USER: ${EMAIL_HOST_USER}
+        EMAIL_HOST_PASSWORD: ${EMAIL_HOST_PASSWORD}
+        EMAIL_PORT: ${EMAIL_PORT}
+```
+
+We can then set envs in our startup script. Notice secrets like `EMAIL_HOST_PASSWORD` we will load from services like Google Secret Manager
 
 
 
