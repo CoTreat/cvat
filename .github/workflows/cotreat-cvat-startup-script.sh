@@ -19,6 +19,14 @@ sudo rsync -av --delete $TEMP_DIR/deploy/ /cvat/
 export CVAT_HOST=cvat.cotreat.io
 export ACME_EMAIL=engineering@cotreat.com.au
 
+# Sendgrid SMTP info
+# https://www.twilio.com/docs/sendgrid/for-developers/sending-email/integrating-with-the-smtp-api
+EMAIL_HOST_PASSWORD=$(gcloud secrets versions access latest --secret="cotreat-cvat-sendgrid-api-key")
+export EMAIL_HOST_PASSWORD
+export EMAIL_HOST=smtp.sendgrid.net
+export EMAIL_HOST_USER=apikey
+export EMAIL_PORT=587
+
 echo "Rebuild and start cvat..."
 # Rebuild the application in the /cvat folder
 cd /cvat
