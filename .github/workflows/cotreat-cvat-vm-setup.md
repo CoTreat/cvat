@@ -26,6 +26,19 @@ gcloud compute instances create cotreat-cvat \
     --reservation-affinity=any
 ```
 
+## Add Snapshot Schedule
+
+```
+gcloud compute resource-policies create snapshot-schedule cotreat-cvat-schedule \
+    --project=cotreat-prod \
+    --region=australia-southeast1 \
+    --max-retention-days=14 \
+    --on-source-disk-delete=keep-auto-snapshots \
+    --daily-schedule \
+    --start-time=15:00 \
+    --storage-location=australia-southeast1
+```
+
 ## Install Docker and other tools
 
 Follow https://docs.docker.com/engine/install/debian/ to install docker

@@ -13,7 +13,7 @@ tar -xzf $TEMP_DIR/deploy.tar.gz -C $TEMP_DIR/deploy
 
 echo "Sync deploy file..."
 # Sync the unzipped folder with the existing /cvat folder
-sudo rsync -av --delete $TEMP_DIR/deploy /cvat/
+sudo rsync -av --delete $TEMP_DIR/deploy/ /cvat/
 
 # Set environment variables
 export CVAT_HOST=cvat.cotreat.io
