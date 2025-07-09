@@ -1,7 +1,7 @@
 ARG PIP_VERSION=24.0
 ARG BASE_IMAGE=ubuntu:22.04
 
-FROM ${BASE_IMAGE} as build-image-base
+FROM ${BASE_IMAGE} AS build-image-base
 
 RUN apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get --no-install-recommends install -yq \
@@ -20,6 +20,8 @@ RUN apt-get update && \
         libxml2-dev \
         libxmlsec1-dev \
         libxmlsec1-openssl \
+        libhdf5-dev \
+        cargo \
     && rm -rf /var/lib/apt/lists/*
 
 ARG PIP_VERSION
@@ -79,20 +81,20 @@ RUN sed -i '/^av==/d' /tmp/utils/dataset_manifest/requirements.txt
 ARG CVAT_CONFIGURATION="production"
 
 RUN --mount=type=cache,target=/root/.cache/pip/http-v2 \
-    DATUMARO_HEADLESS=1 python3 -m pip wheel --no-deps \
+    DATUMARO_HEADLESS=1 python3 -m pip wheel --no-deps --no-binary lxml,xmlsec \
     -r /tmp/cvat/requirements/${CVAT_CONFIGURATION}.txt \
     -w /tmp/wheelhouse
 
-FROM golang:1.22.3 AS build-smokescreen
+FROM golang:1.24.4 AS build-smokescreen
 
-RUN git clone --depth=1 https://github.com/stripe/smokescreen.git
+RUN git clone --filter=blob:none --no-checkout https://github.com/stripe/smokescreen.git
 RUN cd smokescreen && git checkout eb1ac09 && go build -o /tmp/smokescreen
 
 FROM ${BASE_IMAGE}
 
 ARG http_proxy
 ARG https_proxy
-ARG no_proxy="nuclio,${no_proxy}"
+ARG no_proxy
 ARG socks_proxy
 ARG TZ="Etc/UTC"
 
@@ -133,6 +135,7 @@ RUN apt-get update && \
         supervisor \
         tzdata \
         unrar \
+        wait-for-it \
     && ln -fs /usr/share/zoneinfo/${TZ} /etc/localtime && \
     dpkg-reconfigure -f noninteractive tzdata && \
     rm -rf /var/lib/apt/lists/* && \
@@ -182,14 +185,18 @@ RUN if [ "${CVAT_DEBUG_ENABLED}" = 'yes' ]; then \
         python3 -m pip install --no-cache-dir debugpy; \
     fi
 
+# Removing pip due to security reasons. See: https://scout.docker.com/vulnerabilities/id/CVE-2018-20225
+# The vulnerability is dubious and we don't use pip at runtime, but some vulnerability scanners mark it as a high vulnerability,
+# and it was decided to remove pip from the final image
+RUN python -m pip uninstall -y pip
+
 # Install and initialize CVAT, copy all necessary files
 COPY cvat/nginx.conf /etc/nginx/nginx.conf
-COPY --chown=${USER} components /tmp/components
 COPY --chown=${USER} supervisord/ ${HOME}/supervisord
-COPY --chown=${USER} wait-for-it.sh manage.py backend_entrypoint.sh wait_for_deps.sh ${HOME}/
+COPY --chown=${USER} backend_entrypoint.d/ ${HOME}/backend_entrypoint.d
+COPY --chown=${USER} manage.py rqscheduler.py backend_entrypoint.sh wait_for_deps.sh ${HOME}/
 COPY --chown=${USER} utils/ ${HOME}/utils
 COPY --chown=${USER} cvat/ ${HOME}/cvat
-COPY --chown=${USER} rqscheduler.py ${HOME}
 
 ARG COVERAGE_PROCESS_START
 RUN if [ "${COVERAGE_PROCESS_START}" ]; then \

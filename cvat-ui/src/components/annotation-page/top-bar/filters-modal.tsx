@@ -1,5 +1,5 @@
 // Copyright (C) 2021-2022 Intel Corporation
-// Copyright (C) 2023-2024 CVAT.ai Corporation
+// Copyright (C) CVAT.ai Corporation
 //
 // SPDX-License-Identifier: MIT
 
@@ -223,7 +223,7 @@ function FiltersModalComponent(): JSX.Element {
 
     const isModalConfirmable = (): boolean => (
         (QbUtils.queryString(immutableTree, config) || '')
-            .trim().length > 0 && QbUtils.isValidTree(immutableTree)
+            .trim().length > 0 && QbUtils.isValidTree(immutableTree, config)
     );
 
     const renderBuilder = (builderProps: any): JSX.Element => (

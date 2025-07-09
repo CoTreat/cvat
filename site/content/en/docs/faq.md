@@ -84,6 +84,9 @@ services:
   cvat_worker_annotation:
     volumes:
       - cvat_share:/home/django/share:ro
+  cvat_worker_chunks:
+    volumes:
+      - cvat_share:/home/django/share:ro
 
 volumes:
   cvat_share:
@@ -122,7 +125,7 @@ You should build CVAT images with ['Analytics' component](https://github.com/cva
 
 ## How to upload annotations to an entire task from UI when there are multiple jobs in the task
 
-You can upload annotation for a multi-job task from the Dasboard view or the Task view.
+You can upload annotation for a multi-job task from the Dashboard view or the Task view.
 Uploading of annotation from the Annotation view only affects the current job.
 
 ## How to specify multiple hostnames
@@ -134,18 +137,20 @@ To do this, you will need to edit `traefik.http.<router>.cvat.rule` docker label
 ```yaml
   cvat_server:
     labels:
-      - traefik.http.routers.cvat.rule=(Host(`example1.com`) || Host(`example2.com`)) &&
-          PathPrefix(`/api/`, `/analytics/`, `/static/`, `/admin`, `/documentation/`, `/django-rq`)
+      traefik.http.routers.cvat.rule:
+        (Host(`example1.com`) || Host(`example2.com`)) &&
+        (PathPrefix(`/api/`) || PathPrefix(`/static/`) || PathPrefix(`/admin`)
+          || PathPrefix(`/django-rq`))
 
   cvat_ui:
     labels:
-      - traefik.http.routers.cvat-ui.rule=Host(`example1.com`) || Host(`example2.com`)
+      traefik.http.routers.cvat-ui.rule: Host(`example1.com`) || Host(`example2.com`)
 ```
 
 ## How to create a task with multiple jobs
 
 Set the segment size when you create a new task, this option is available in the
-{{< ilink "/docs/manual/basics/create_an_annotation_task#advanced-configuration" "Advanced configuration" >}}
+{{< ilink "/docs/manual/basics/create-annotation-task#advanced-configuration" "Advanced configuration" >}}
 section.
 
 ## How to transfer CVAT to another machine
