@@ -1,5 +1,5 @@
 // Copyright (C) 2022 Intel Corporation
-// Copyright (C) 2022-2024 CVAT.ai Corporation
+// Copyright (C) CVAT.ai Corporation
 //
 // SPDX-License-Identifier: MIT
 
@@ -88,7 +88,7 @@ export default function ResourceFilterHOC(
     };
 
     function isValidTree(tree: ImmutableTree): boolean {
-        return (QbUtils.queryString(tree, config) || '').trim().length > 0 && QbUtils.isValidTree(tree);
+        return (QbUtils.queryString(tree, config) || '').trim().length > 0 && QbUtils.isValidTree(tree, config);
     }
 
     function unite(filters: string[]): string {

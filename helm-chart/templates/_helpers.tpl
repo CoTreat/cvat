@@ -127,7 +127,30 @@ The name of the service account to use for backend pods
 - name: DJANGO_LOG_SERVER_PORT
   value: "80"
 - name: CLICKHOUSE_HOST
-  value: "{{ .Release.Name }}-clickhouse"
+  valueFrom:
+    secretKeyRef:
+      name: cvat-analytics-secret
+      key: CLICKHOUSE_HOST
+- name: CLICKHOUSE_PORT
+  valueFrom:
+    secretKeyRef:
+      name: cvat-analytics-secret
+      key: CLICKHOUSE_PORT
+- name: CLICKHOUSE_DB
+  valueFrom:
+    secretKeyRef:
+      name: cvat-analytics-secret
+      key: CLICKHOUSE_DB
+- name: CLICKHOUSE_USER
+  valueFrom:
+    secretKeyRef:
+      name: cvat-analytics-secret
+      key: CLICKHOUSE_USER
+- name: CLICKHOUSE_PASSWORD
+  valueFrom:
+    secretKeyRef:
+      name: cvat-analytics-secret
+      key: CLICKHOUSE_PASSWORD
 {{- end }}
 
 - name: SMOKESCREEN_OPTS
@@ -139,5 +162,25 @@ The name of the service account to use for backend pods
   value: "{{ .Release.Name }}-nuclio-dashboard"
 - name: CVAT_NUCLIO_FUNCTION_NAMESPACE
   value: "{{ .Release.Namespace }}"
+{{- end }}
+
+{{- range $envName, $envValueTemplate := .Values.cvat.backend.extensionEnv }}
+- name: {{ $envName | toYaml }}
+  value: {{ tpl $envValueTemplate $ | toYaml }}
+{{- end }}
+{{- end }}
+
+{{- define "cvat.backend.worker.livenessProbe" -}}
+{{- if .livenessProbe.enabled }}
+livenessProbe:
+  exec:
+    command:
+    - python
+    - manage.py
+    - workerprobe
+    {{- range .args }}
+    - {{ . }}
+    {{- end }}
+{{ toYaml (omit .livenessProbe "enabled") | indent 2}}
 {{- end }}
 {{- end }}

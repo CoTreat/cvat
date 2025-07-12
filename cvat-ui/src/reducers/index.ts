@@ -1,16 +1,19 @@
 // Copyright (C) 2020-2022 Intel Corporation
-// Copyright (C) 2022-2024 CVAT.ai Corporation
+// Copyright (C) CVAT.ai Corporation
 //
 // SPDX-License-Identifier: MIT
 
 import { Canvas3d } from 'cvat-canvas3d/src/typescript/canvas3d';
 import { Canvas, RectDrawingMethod, CuboidDrawingMethod } from 'cvat-canvas-wrapper';
+import { OrientationVisibility } from 'cvat-canvas3d-wrapper';
 import {
-    Webhook, MLModel, Organization, Job, Label, User,
+    Webhook, MLModel, Organization, Job, Task, Project, Label, User,
     QualityConflict, FramesMetaData, RQStatus, Event, Invitation, SerializedAPISchema,
+    Request, JobValidationLayout, QualitySettings, TaskValidationLayout, ObjectState,
+    ConsensusSettings, AboutData, ShapeType, ObjectType,
 } from 'cvat-core-wrapper';
 import { IntelligentScissors } from 'utils/opencv-wrapper/intelligent-scissors';
-import { KeyMap } from 'utils/mousetrap-react';
+import { KeyMap, KeyMapItem } from 'utils/mousetrap-react';
 import { OpenCVTracker } from 'utils/opencv-wrapper/opencv-interfaces';
 import { ImageFilter } from 'utils/image-processing';
 
@@ -36,9 +39,14 @@ interface Preview {
     preview: string;
 }
 
-export type Project = any;
+export enum InstanceType {
+    PROJECT = 'project',
+    TASK = 'task',
+    JOB = 'job',
+}
 
 export interface ProjectsState {
+    fetchingTimestamp: number;
     initialized: boolean;
     fetching: boolean;
     count: number;
@@ -68,8 +76,6 @@ export interface TasksQuery {
     projectId: number | null;
 }
 
-export type Task = any; // cvat-core instance
-
 export interface JobsQuery {
     page: number;
     sort: string | null;
@@ -78,6 +84,7 @@ export interface JobsQuery {
 }
 
 export interface JobsState {
+    fetchingTimestamp: number;
     query: JobsQuery;
     fetching: boolean;
     count: number;
@@ -93,6 +100,7 @@ export interface JobsState {
 }
 
 export interface TasksState {
+    fetchingTimestamp: number;
     initialized: boolean;
     fetching: boolean;
     moveTask: {
@@ -115,38 +123,23 @@ export interface TasksState {
 export interface ExportState {
     projects: {
         dataset: {
-            current: {
-                [id: number]: string[];
-            };
-            modalInstance: any | null;
+            modalInstance: Project | null;
         };
         backup: {
-            current: {
-                [id: number]: boolean;
-            };
-            modalInstance: any | null;
+            modalInstance: Project | null;
         };
     };
     tasks: {
         dataset: {
-            current: {
-                [id: number]: string[];
-            };
-            modalInstance: any | null;
+            modalInstance: Task | null;
         };
         backup: {
-            current: {
-                [id: number]: boolean;
-            };
-            modalInstance: any | null;
+            modalInstance: Task | null;
         };
     };
     jobs: {
         dataset: {
-            current: {
-                [id: number]: string[];
-            };
-            modalInstance: any | null;
+            modalInstance: Job | null;
         };
     };
     instanceType: 'project' | 'task' | 'job' | null;
@@ -155,13 +148,12 @@ export interface ExportState {
 export interface ImportState {
     projects: {
         dataset: {
-            modalInstance: any | null;
-            current: {
-                [id: number]: {
-                    format: string;
-                    progress: number;
-                    status: string;
-                };
+            modalInstance: Project | null;
+            uploadState: {
+                id: number | null,
+                format: string;
+                progress: number;
+                status: string;
             };
         };
         backup: {
@@ -171,10 +163,7 @@ export interface ImportState {
     };
     tasks: {
         dataset: {
-            modalInstance: any | null;
-            current: {
-                [id: number]: string;
-            };
+            modalInstance: Task | null;
         };
         backup: {
             modalVisible: boolean;
@@ -183,13 +172,22 @@ export interface ImportState {
     };
     jobs: {
         dataset: {
-            modalInstance: any | null;
-            current: {
-                [id: number]: string;
-            };
+            modalInstance: Job | null;
         };
     };
     instanceType: 'project' | 'task' | 'job' | null;
+}
+
+export interface ConsensusState {
+    fetching: boolean;
+    consensusSettings: ConsensusSettings | null;
+    taskInstance: Task | null;
+    jobInstance: Job | null;
+    actions: {
+        merging: {
+            [instanceKey: string]: boolean;
+        };
+    }
 }
 
 export interface FormatsState {
@@ -276,10 +274,65 @@ export interface PluginsState {
             globalStateDidUpdate?: CallableFunction;
         };
     };
+    callbacks: {
+        annotationPage: {
+            header: {
+                menu: {
+                    beforeJobFinish: (() => Promise<void>)[];
+                };
+            };
+        };
+    };
+    overridableComponents: {
+        annotationPage: {
+            header: {
+                saveAnnotationButton: (() => JSX.Element)[];
+            };
+        };
+        qualityControlPage: {
+            task: {
+                overviewTab: ((props: {
+                    instance: Task;
+                    qualitySettings: {
+                        settings: QualitySettings | null;
+                        childrenSettings: QualitySettings[] | null;
+                    };
+                }) => JSX.Element)[];
+
+                allocationTable: ((
+                    props: {
+                        task: Task;
+                        gtJobId: number;
+                        gtJobMeta: FramesMetaData;
+                        qualitySettings: QualitySettings;
+                        validationLayout: TaskValidationLayout;
+                        onDeleteFrames: (frames: number[]) => void;
+                        onRestoreFrames: (frames: number[]) => void;
+                    }) => JSX.Element)[];
+            }
+            project : {
+                overviewTab: ((props: {
+                    instance: Project;
+                    qualitySettings: {
+                        settings: QualitySettings | null;
+                        childrenSettings: QualitySettings[] | null;
+                    };
+                }) => JSX.Element)[];
+            }
+        };
+        analyticsReportPage: {
+            content: ((
+                props: {
+                    resource: Project | Task | Job;
+                    timePeriod: { startDate: string; endDate: string; } | null;
+                },
+            ) => JSX.Element)[];
+        };
+    },
     components: {
         header: {
             userMenu: {
-                items: PluginComponent[],
+                items: PluginComponent[];
             };
         };
         loginPage: {
@@ -287,23 +340,26 @@ export interface PluginsState {
         };
         modelsPage: {
             topBar: {
-                items: PluginComponent[],
-            },
+                items: PluginComponent[];
+            };
             modelItem: {
                 menu: {
-                    items: PluginComponent[],
-                },
+                    items: PluginComponent[];
+                };
                 topBar:{
                     menu: {
-                        items: PluginComponent[],
-                    }
-                },
-            }
+                        items: PluginComponent[];
+                    };
+                };
+            };
         };
         projectActions: {
             items: PluginComponent[];
         };
         taskActions: {
+            items: PluginComponent[];
+        };
+        jobActions: {
             items: PluginComponent[];
         };
         taskItem: {
@@ -312,29 +368,21 @@ export interface PluginsState {
         projectItem: {
             ribbon: PluginComponent[];
         };
-        annotationPage: {
-            header: {
-                player: PluginComponent[];
-            };
-        };
         settings: {
             player: PluginComponent[];
-        }
+        };
         about: {
             links: {
                 items: PluginComponent[];
-            }
-        }
+            };
+        };
         router: PluginComponent[];
-        loggedInModals: PluginComponent[];
     }
 }
 
 export interface AboutState {
-    server: any;
+    server: AboutData;
     packageVersion: {
-        core: string;
-        canvas: string;
         ui: string;
     };
     fetching: boolean;
@@ -390,12 +438,6 @@ export interface ToolsBlockerState {
     buttonVisible?: boolean;
 }
 
-export enum TaskStatus {
-    ANNOTATION = 'annotation',
-    REVIEW = 'validation',
-    COMPLETED = 'completed',
-}
-
 export interface ActiveInference {
     status: RQStatus;
     progress: number;
@@ -412,7 +454,6 @@ export interface ModelsState {
     detectors: MLModel[];
     trackers: MLModel[];
     reid: MLModel[];
-    classifiers: MLModel[];
     totalCount: number;
     requestedInferenceIDs: {
         [index: string]: boolean;
@@ -433,6 +474,12 @@ export interface ErrorState {
     reason: Error;
     shouldLog?: boolean;
     className?: string;
+}
+
+export interface NotificationState {
+    message: string;
+    description?: string;
+    duration?: number;
 }
 
 export interface NotificationsState {
@@ -468,6 +515,7 @@ export interface NotificationsState {
             exporting: null | ErrorState;
             importing: null | ErrorState;
             moving: null | ErrorState;
+            mergingConsensus: null | ErrorState;
         };
         jobs: {
             updating: null | ErrorState;
@@ -496,6 +544,7 @@ export interface NotificationsState {
         annotation: {
             saving: null | ErrorState;
             jobFetching: null | ErrorState;
+            jobUpdating: null | ErrorState;
             frameFetching: null | ErrorState;
             changingLabelColor: null | ErrorState;
             updating: null | ErrorState;
@@ -578,41 +627,47 @@ export interface NotificationsState {
             acceptingInvitation: null | ErrorState;
             decliningInvitation: null | ErrorState;
             resendingInvitation: null | ErrorState;
+        };
+        requests: {
+            fetching: null | ErrorState;
+            canceling: null | ErrorState;
+            deleting: null | ErrorState;
         }
     };
     messages: {
         tasks: {
-            loadingDone: string;
-            importingDone: string;
-            movingDone: string;
+            loadingDone: null | NotificationState;
+            importingDone: null | NotificationState;
+            movingDone: null | NotificationState;
+            mergingConsensusDone: null | NotificationState;
         };
         models: {
-            inferenceDone: string;
+            inferenceDone: null | NotificationState;
         };
         auth: {
-            changePasswordDone: string;
-            registerDone: string;
-            requestPasswordResetDone: string;
-            resetPasswordDone: string;
+            changePasswordDone: null | NotificationState;
+            registerDone: null | NotificationState;
+            requestPasswordResetDone: null | NotificationState;
+            resetPasswordDone: null | NotificationState;
         };
         projects: {
-            restoringDone: string;
+            restoringDone: null | NotificationState;
         };
         exporting: {
-            dataset: string;
-            annotation: string;
-            backup: string;
+            dataset: null | NotificationState;
+            annotation: null | NotificationState;
+            backup: null | NotificationState;
         };
         importing: {
-            dataset: string;
-            annotation: string;
-            backup: string;
+            dataset: null | NotificationState;
+            annotation: null | NotificationState;
+            backup: null | NotificationState;
         };
         invitations: {
-            newInvitations: string;
-            acceptInvitationDone: string;
-            declineInvitationDone: string;
-            resendingInvitation: string;
+            newInvitations: null | NotificationState;
+            acceptInvitationDone: null | NotificationState;
+            declineInvitationDone: null | NotificationState;
+            resendingInvitation: null | NotificationState;
         }
     };
 }
@@ -641,23 +696,6 @@ export enum ActiveControl {
     OPENCV_TOOLS = 'opencv_tools',
 }
 
-export enum ShapeType {
-    RECTANGLE = 'rectangle',
-    POLYGON = 'polygon',
-    POLYLINE = 'polyline',
-    POINTS = 'points',
-    ELLIPSE = 'ellipse',
-    CUBOID = 'cuboid',
-    MASK = 'mask',
-    SKELETON = 'skeleton',
-}
-
-export enum ObjectType {
-    SHAPE = 'shape',
-    TRACK = 'track',
-    TAG = 'tag',
-}
-
 export enum StatesOrdering {
     ID_DESCENT = 'ID - descent',
     ID_ASCENT = 'ID - ascent',
@@ -679,6 +717,10 @@ export enum NavigationType {
     REGULAR = 'regular',
     FILTERED = 'filtered',
     EMPTY = 'empty',
+}
+
+export interface EditingState {
+    objectState: ObjectState | null;
 }
 
 export interface AnnotationState {
@@ -706,19 +748,25 @@ export interface AnnotationState {
         instance: Canvas | Canvas3d | null;
         ready: boolean;
         activeControl: ActiveControl;
+        activeObjectHidden: boolean;
     };
     job: {
         openTime: null | number;
         labels: Label[];
         requestedId: number | null;
+        meta: FramesMetaData | null;
         instance: Job | null | undefined;
+        frameNumbers: number[];
         queryParameters: {
             initialOpenGuide: boolean;
             defaultLabel: string | null;
             defaultPointsCount: number | null;
         };
-        groundTruthJobFramesMeta: FramesMetaData | null;
-        groundTruthInstance: Job | null;
+        groundTruthInfo: {
+            validationLayout: JobValidationLayout | null;
+            groundTruthJobFramesMeta: FramesMetaData | null;
+            groundTruthInstance: Job | null;
+        },
         attributes: Record<number, any[]>;
         fetching: boolean;
         saving: boolean;
@@ -742,7 +790,8 @@ export interface AnnotationState {
     };
     drawing: {
         activeInteractor?: MLModel | OpenCVTool;
-        activeShapeType: ShapeType;
+        activeInteractorParameters?: MLModel['params']['canvas'];
+        activeShapeType: ShapeType | null;
         activeRectDrawingMethod?: RectDrawingMethod;
         activeCuboidDrawingMethod?: CuboidDrawingMethod;
         activeNumOfPoints?: number;
@@ -750,6 +799,7 @@ export interface AnnotationState {
         activeObjectType: ObjectType;
         activeInitialState?: any;
     };
+    editing: EditingState;
     annotations: {
         activatedStateID: number | null;
         activatedElementID: number | null;
@@ -784,6 +834,9 @@ export interface AnnotationState {
         visible: boolean;
         data: any;
     };
+    search: {
+        visible: boolean;
+    }
     propagate: {
         visible: boolean;
     };
@@ -848,6 +901,7 @@ export interface WorkspaceSettingsState {
     autoSaveInterval: number; // in ms
     aamZoomMargin: number;
     automaticBordering: boolean;
+    adaptiveZoom: boolean;
     showObjectsTextAlways: boolean;
     showAllInterpolationTracks: boolean;
     intelligentPolygonCrop: boolean;
@@ -869,6 +923,7 @@ export interface ShapesSettingsState {
     showBitmap: boolean;
     showProjections: boolean;
     showGroundTruth: boolean;
+    orientationVisibility: OrientationVisibility;
 }
 
 export interface SettingsState {
@@ -883,11 +938,7 @@ export interface ShortcutsState {
     visibleShortcutsHelp: boolean;
     keyMap: KeyMap;
     normalizedKeyMap: Record<string, string>;
-}
-
-export enum StorageLocation {
-    LOCAL = 'local',
-    CLOUD_STORAGE = 'cloud_storage',
+    defaultState: Record<string, KeyMapItem>
 }
 
 export enum ReviewStatus {
@@ -896,11 +947,19 @@ export enum ReviewStatus {
     REVIEW_FURTHER = 'review_further',
 }
 
+export enum NewIssueSource {
+    ISSUE_TOOL = 'tool',
+    QUICK_ISSUE = 'quick_issue',
+}
+
 export interface ReviewState {
     issues: any[];
     frameIssues: any[];
     latestComments: string[];
-    newIssuePosition: number[] | null;
+    newIssue: {
+        position: number[] | null;
+        source: NewIssueSource | null;
+    }
     issuesHidden: boolean;
     issuesResolvedHidden: boolean;
     conflicts: QualityConflict[];
@@ -909,6 +968,14 @@ export interface ReviewState {
         jobId: number | null;
         issueId: number | null;
     };
+}
+
+export interface OrganizationMembersQuery {
+    search: string | null;
+    filter: string | null;
+    sort: string | null;
+    page: number;
+    pageSize: number;
 }
 
 export interface OrganizationState {
@@ -950,6 +1017,22 @@ export interface InvitationsState {
     query: InvitationsQuery;
 }
 
+export interface RequestsQuery {
+    page: number;
+}
+
+export interface RequestsState {
+    fetching: boolean;
+    initialized: boolean;
+    requests: Record<string, Request>;
+    disabled: Record<string, boolean>;
+    query: RequestsQuery;
+}
+
+export interface NavigationState {
+    prevLocation: string | null;
+}
+
 export interface CombinedState {
     auth: AuthState;
     projects: ProjectsState;
@@ -967,11 +1050,14 @@ export interface CombinedState {
     review: ReviewState;
     export: ExportState;
     import: ImportState;
+    consensus: ConsensusState;
     cloudStorages: CloudStoragesState;
     organizations: OrganizationState;
     invitations: InvitationsState;
     webhooks: WebhooksState;
+    requests: RequestsState;
     serverAPI: ServerAPIState;
+    navigation: NavigationState;
 }
 
 export interface Indexable {

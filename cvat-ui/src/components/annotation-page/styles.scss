@@ -1,5 +1,5 @@
 // Copyright (C) 2020-2022 Intel Corporation
-// Copyright (C) 2023-2024 CVAT.ai Corporation
+// Copyright (C) CVAT.ai Corporation
 //
 // SPDX-License-Identifier: MIT
 
@@ -37,6 +37,10 @@
         align-items: center;
         justify-content: center;
         margin: 0 3px;
+
+        &.cvat-button-active {
+            color: $border-color-hover;
+        }
 
         &:hover {
             color: $text-color;
@@ -94,10 +98,6 @@
 
     opacity: 0.5;
     pointer-events: none;
-}
-
-.cvat-button-active.ant-btn {
-    color: $border-color-hover;
 }
 
 .cvat-annotation-header-player-group > div {
@@ -177,6 +177,9 @@
     line-height: $grid-unit-size * 3;
 
     > span {
+        display: inline-block;
+        width: 100%;
+        white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
         user-select: none;
@@ -186,7 +189,9 @@
 
 .cvat-player-frame-url-icon,
 .cvat-player-delete-frame,
-.cvat-player-restore-frame {
+.cvat-player-restore-frame,
+.cvat-player-copy-frame-name-icon,
+.cvat-player-search-frame-name-icon {
     opacity: 0.7;
     color: $objects-bar-icons-color;
 
@@ -199,15 +204,31 @@
     }
 }
 
-.cvat-player-delete-frame,
-.cvat-player-restore-frame {
-    margin-left: $grid-unit-size * 2;
+.cvat-player-frame-actions {
+    span:not(:first-child) {
+        margin-left: $grid-unit-size;
+    }
 }
 
 .cvat-player-frame-selector {
-    width: 5em;
+    width: unset;
     padding-right: 5px;
     margin-left: 5px;
+
+    .ant-input-number-input-wrap {
+        width: unset;
+    }
+
+    .ant-input-number-input {
+        box-sizing: content-box;
+        width: var(--frame-input-width, 6ch);
+        min-width: 6ch;
+        max-width: 10ch;
+    }
+}
+
+.cvat-player-actions {
+    margin-left: $grid-unit-size;
 }
 
 .cvat-annotation-header-right-group {
@@ -526,4 +547,28 @@
     .ant-modal-footer {
         margin: 0;
     }
+}
+
+.cvat-frame-search-selector {
+    width: 100%;
+}
+
+.cvat-frame-search-item {
+    display: flex;
+    justify-content: start;
+    overflow: hidden;
+    width: 100%;
+}
+
+.cvat-frame-search-item-number {
+    margin-right: $grid-unit-size;
+    white-space: nowrap;
+}
+
+.cvat-frame-search-item-name {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    direction: rtl;
+    unicode-bidi: plaintext;
 }
