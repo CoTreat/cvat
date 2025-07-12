@@ -80,7 +80,7 @@ import EmailVerificationSentPage from './email-confirmation-pages/email-verifica
 import IncorrectEmailConfirmationPage from './email-confirmation-pages/incorrect-email-confirmation';
 import CreateJobPage from './create-job-page/create-job-page';
 import QualityControlPage from './quality-control/quality-control-page';
-import AnalyticsReportPage from './analytics-report/analytics-report-page';
+import AnalyticsReportPage from './analytics-page/analytics-page';
 import ConsensusManagementPage from './consensus-management-page/consensus-management-page';
 import InvitationWatcher from './invitation-watcher/invitation-watcher';
 

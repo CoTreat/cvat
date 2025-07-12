@@ -161,6 +161,14 @@ export default interface CVATCore {
         events: {
             export: (filter: AnalyticsEventsFilter) => Promise<string>;
         };
+
+        performance: {
+            reports: (filter: AnalyticsReportFilter) => Promise<AnalyticsReport>;
+            calculate: (
+                body: { jobID?: number; taskID?: number; projectID?: number; },
+                onUpdate: (status: enums.RQStatus, progress: number, message: string) => void,
+            ) => Promise<void>;
+        };
     };
     frames: {
         getMeta: any;
