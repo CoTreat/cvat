@@ -67,3 +67,11 @@ cvat-ui/dist
 # produced by allure report
 /**/allure-report*
 /**/allure-results*
+
+# AI coding assistant folders
+.claude/
+.gemini/
+.cursor/
+.aider/
+.windsurf/
+.copilot/

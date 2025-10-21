@@ -1,0 +1,23 @@
+# macOS-specific development overrides
+#
+# WHY THIS FILE EXISTS:
+# - macOS Homebrew ships FFmpeg 8.x (not 4.x)
+# - PyAV 9.2.0 doesn't compile with FFmpeg 8.x on Python 3.11
+# - PyAV 13.x+ supports FFmpeg 8.x
+# - numpy~=1.22.2 is incompatible with Python 3.11
+#
+# Production uses FFmpeg 4.3.1 with PyAV 9.2.0 (stable, tested)
+# This file is ONLY for local macOS development
+#
+# USAGE:
+#   pip install -r cvat/requirements/development.txt \
+#               -r dev/requirements.txt \
+#               -r dev/requirements.macos.txt
+#
+# This will override the pinned versions with macOS-compatible ones
+
+# Override PyAV 9.2.0 with version that supports FFmpeg 8.x
+av>=13.0.0
+
+# Override numpy for Python 3.11 compatibility
+numpy>=1.23.5,<2
