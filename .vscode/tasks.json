@@ -8,7 +8,7 @@
             "script": "start",
             "path": "cvat-ui/",
             "label": "npm: start - cvat-ui",
-            "detail": "webpack-dev-server --env.API_URL=http://localhost:7000 --config ./webpack.config.js --mode=development",
+            "detail": "webpack-dev-server --env.API_URL=http://127.0.0.1:7000 --config ./webpack.config.js --mode=development",
             "promptOnClose": true,
             "isBackground": true,
             "problemMatcher": {

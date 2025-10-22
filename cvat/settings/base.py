@@ -39,7 +39,7 @@ from django.core.exceptions import ImproperlyConfigured
 BASE_DIR = str(Path(__file__).parents[2])
 
 ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
-INTERNAL_IPS = ["127.0.0.1"]
+INTERNAL_IPS = ["127.0.0.1", "localhost"]
 SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "")
 
 

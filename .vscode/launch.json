@@ -175,7 +175,7 @@
                 "runserver",
                 "--noreload",
                 "--insecure",
-                "127.0.0.1:7000"
+                "0.0.0.0:8000"
             ],
             "django": true,
             "cwd": "${workspaceFolder}",
