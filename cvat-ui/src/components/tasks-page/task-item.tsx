@@ -9,7 +9,7 @@ import { withRouter } from 'react-router-dom';
 import Text from 'antd/lib/typography/Text';
 import { Row, Col } from 'antd/lib/grid';
 import Button from 'antd/lib/button';
-import { MoreOutlined } from '@ant-design/icons';
+import { BookOutlined, MoreOutlined } from '@ant-design/icons';
 import Progress from 'antd/lib/progress';
 import Badge from 'antd/lib/badge';
 import moment from 'moment';
@@ -17,6 +17,7 @@ import { Task, RQStatus, Request } from 'cvat-core-wrapper';
 import Preview from 'components/common/preview';
 import { ActiveInference, PluginComponent } from 'reducers';
 import StatusMessage from 'components/requests-page/request-status';
+import { Tooltip } from 'antd';
 import AutomaticAnnotationProgress from './automatic-annotation-progress';
 import TaskActionsComponent from './actions-menu';
 
@@ -145,6 +146,16 @@ class TaskItemComponent extends React.PureComponent<TaskItemProps & RouteCompone
                     </>
                 )}
                 <Text type='secondary'>{`Last updated ${updated}`}</Text>
+                <br />
+                {taskInstance.projectName && (
+                    <Tooltip title='Project Name'>
+                        <Text>
+                            <BookOutlined />
+                            {' '}
+                            {`${taskInstance.projectName}`}
+                        </Text>
+                    </Tooltip>
+                )}
             </Col>
         );
     }

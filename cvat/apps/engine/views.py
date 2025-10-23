@@ -749,6 +749,7 @@ class TaskViewSet(viewsets.GenericViewSet, mixins.ListModelMixin,
         'data',
         'assignee',
         'owner',
+        'project',
         'target_storage',
         'source_storage',
         'annotation_guide',
@@ -1556,6 +1557,7 @@ class JobViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.CreateMo
 ):
     queryset = Job.objects.select_related(
         'assignee',
+        'segment__task',
         'segment__task__data',
         'segment__task__project',
         'segment__task__annotation_guide',

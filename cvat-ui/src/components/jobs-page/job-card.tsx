@@ -8,12 +8,14 @@ import { useSelector } from 'react-redux';
 import { useHistory } from 'react-router';
 import Card from 'antd/lib/card';
 import Descriptions from 'antd/lib/descriptions';
-import { MoreOutlined } from '@ant-design/icons';
+import Text from 'antd/lib/typography/Text';
+import { CarryOutOutlined, MoreOutlined } from '@ant-design/icons';
 
 import { Job, JobType } from 'cvat-core-wrapper';
 import { useCardHeightHOC } from 'utils/hooks';
 import Preview from 'components/common/preview';
 import { CombinedState } from 'reducers';
+import { Tooltip } from 'antd';
 import JobActionsComponent from './actions-menu';
 
 const useCardHeight = useCardHeightHOC({
@@ -58,6 +60,19 @@ function JobCardComponent(props: Props): JSX.Element {
         tag = 'Consensus';
     }
 
+    const taskInfo = (
+        <span>
+Project:
+            {job.projectName ? job.projectName : '--'}
+            {' '}
+            <br />
+            {' '}
+Task:
+            {' '}
+            {job.taskName}
+        </span>
+    );
+
     return (
         <Card
             style={{ ...style, height }}
@@ -82,8 +97,19 @@ function JobCardComponent(props: Props): JSX.Element {
             )}
             hoverable
         >
+            <Tooltip title={taskInfo}>
+                <CarryOutOutlined />
+                {' '}
+                <Text strong style={{ fontSize: '12px' }}>{job.taskName}</Text>
+            </Tooltip>
             <Descriptions column={1} size='small'>
-                <Descriptions.Item label='Stage and state'>{`${job.stage} ${job.state}`}</Descriptions.Item>
+
+                <Descriptions.Item label='Stage'>
+                    {job.stage}
+                </Descriptions.Item>
+                <Descriptions.Item label='State'>
+                    {job.state}
+                </Descriptions.Item>
                 <Descriptions.Item label='Frames'>{job.stopFrame - job.startFrame + 1}</Descriptions.Item>
                 {job.assignee ? (
                     <Descriptions.Item label='Assignee'>{job.assignee.username}</Descriptions.Item>

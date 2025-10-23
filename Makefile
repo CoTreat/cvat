@@ -122,7 +122,7 @@ start-frontend: install-frontend ## Start frontend dev server (http://localhost:
 	@echo "$(CYAN)Access at: http://localhost:3000$(NC)"
 	@yarn run start:cvat-ui
 
-start-backend: install-backend ## Start Django backend (http://localhost:8000)
+start-backend:
 	@echo "$(GREEN)Starting Django backend...$(NC)"
 	@echo "$(CYAN)Access at: http://localhost:8000$(NC)"
 	@echo "$(YELLOW)Tip: Use VS Code F5 for debugging instead$(NC)"
@@ -150,7 +150,7 @@ superuser: ## Create Django superuser (admin/admin)
 		u.save(); \
 		print('✓ Superuser created: admin/admin')"
 
-test-data: ## Create test organizations and users
+init-data: ## Create test organizations and users
 	@echo "$(GREEN)Creating test data...$(NC)"
 	@. $(VENV)/bin/activate && python dev/setup_test_data.py
 	@echo "$(GREEN)✓ Test data created$(NC)"
@@ -165,23 +165,12 @@ db-shell: ## Open PostgreSQL shell
 
 ##@ Testing
 
-test: test-backend test-frontend ## Run all tests
 
-test-backend: ## Run Python/Django tests
-	@echo "$(GREEN)Running backend tests...$(NC)"
-	@. $(VENV)/bin/activate && pytest cvat/apps/engine/tests/
 
 test-frontend: ## Run frontend tests
 	@echo "$(GREEN)Running frontend tests...$(NC)"
 	@cd cvat-ui && yarn test
 
-test-video: ## Test video processing (Docker vs local)
-	@echo "$(YELLOW)Testing video processing...$(NC)"
-	@echo "$(CYAN)Docker (FFmpeg 4.3.1):$(NC)"
-	@$(COMPOSE) exec cvat_server python -c "import av; print(f'PyAV version: {av.__version__}')"
-	@echo ""
-	@echo "$(CYAN)Local (FFmpeg 8.x):$(NC)"
-	@. $(VENV)/bin/activate && python -c "import av; print(f'PyAV version: {av.__version__}')"
 
 lint: ## Run linters
 	@echo "$(GREEN)Running linters...$(NC)"
