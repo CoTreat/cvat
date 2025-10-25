@@ -2,7 +2,7 @@
 # Quick commands for common development tasks
 
 .PHONY: help setup install-backend install-frontend start-docker start-frontend start-backend \
-        stop restart migrate test test-backend test-frontend test-data clean reset \
+        stop restart migrate test test-frontend test-data test-cotreat clean reset \
         logs shell superuser docker-only hybrid
 
 # Default target
@@ -165,7 +165,9 @@ db-shell: ## Open PostgreSQL shell
 
 ##@ Testing
 
-
+test-cotreat: ## Run CoTreat backend tests (fast, no Docker required)
+	@echo "$(GREEN)Running CoTreat backend tests...$(NC)"
+	@./cotreat_tests/run_django_tests.sh
 
 test-frontend: ## Run frontend tests
 	@echo "$(GREEN)Running frontend tests...$(NC)"

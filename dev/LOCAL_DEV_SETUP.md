@@ -1,6 +1,6 @@
 # CVAT Local Development Environment Setup (macOS)
 
-Complete guide for setting up CVAT for local development on **macOS**.
+A guide for setting up CVAT for local development on **macOS**.
 
 ---
 
@@ -630,23 +630,144 @@ python -c "from shapely.geometry import Point; print('✓ Shapely/GEOS loaded su
 
 ## Testing
 
-### Run Backend Tests
+CoTreat uses **standalone backend tests** that run independently from the original Docker-based tests. These tests are fast, require no Docker, and provide quick feedback during development.
+
+### ⚡ CoTreat Backend Tests (Recommended)
+
+**Location:** `cotreat_tests/` (at project root)
+
+These are **standalone tests** that test the CVAT Django backend API without requiring Docker infrastructure.
+
+#### Quick Start
 
 ```bash
-source .venv/bin/activate
-pytest cvat/apps/engine/tests/
+# Run all Django tests (~0.3 seconds)
+./cotreat_tests/run_django_tests.sh
 ```
 
-### Run Frontend Tests
+#### Running Tests
+
+```bash
+# Run all Django tests
+./cotreat_tests/run_django_tests.sh
+
+# Run specific module
+PYTHONPATH=. .venv/bin/python manage.py test cotreat_tests.django_tests.test_auth
+
+# Run specific test class
+PYTHONPATH=. .venv/bin/python manage.py test \
+  cotreat_tests.django_tests.test_auth.AuthenticationAPITestCase
+
+# Run single test
+PYTHONPATH=. .venv/bin/python manage.py test \
+  cotreat_tests.django_tests.test_auth.AuthenticationAPITestCase.test_user_login
+```
+
+
+#### Test Documentation
+
+For detailed information:
+- **[cotreat_tests/README_MAIN.md](../cotreat_tests/README_MAIN.md)** - Complete guide
+- **[cotreat_tests/DJANGO_QUICKSTART.md](../cotreat_tests/DJANGO_QUICKSTART.md)** - Quick start guide
+- **[cotreat_tests/DJANGO_TESTS.md](../cotreat_tests/DJANGO_TESTS.md)** - Detailed testing guide
+
+#### Adding New Tests
+
+Create a new test file in `cotreat_tests/django_tests/`:
+
+```python
+# In cotreat_tests/django_tests/test_myfeature.py
+from django.urls import reverse
+from rest_framework import status
+from .base import BaseAPITestCase
+
+class MyFeatureTestCase(BaseAPITestCase):
+    def test_my_endpoint(self):
+        """Test my endpoint"""
+        url = reverse("my-endpoint")
+        response = self.authenticated_client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn("data", response.data)
+```
+
+### 🐳 Original Docker-Based Tests (Legacy)
+
+**Note:** The original tests in `tests/python/` require Docker and are **no longer actively used** for CoTreat development. We use the standalone `cotreat_tests/` instead.
+
+If you need to run original tests:
+
+```bash
+# Requires Docker stack running
+source .venv/bin/activate
+pytest tests/python/rest_api/test_auth.py
+```
+
+### 🎨 Frontend Tests
 
 ```bash
 cd cvat-ui
 yarn test
 ```
 
-### Run E2E Tests
+### 🧪 Test Comparison
 
-See `tests/` directory for Cypress end-to-end tests.
+| Aspect | CoTreat Tests | Original Tests |
+|--------|--------------|----------------|
+| **Location** | `cotreat_tests/` | `tests/python/rest_api/` |
+| **Docker** | ❌ Not required | ✅ Required |
+| **Database** | SQLite in-memory | PostgreSQL in Docker |
+| **Speed** | 0.3-5 seconds | Minutes |
+| **Use For** | API/Unit testing | Integration/E2E |
+| **Active Use** | ✅ Primary | ⚠️ Legacy (not maintained) |
+
+### 🚀 Using Makefile for Tests
+
+```bash
+# Run CoTreat tests (fast)
+make test-cotreat        # Run all CoTreat backend tests
+
+# Run frontend tests
+make test-frontend       # Run JavaScript tests
+
+# Run linters
+make lint                # Run all linters
+make lint-fix            # Auto-fix linting issues
+```
+
+### 📊 Test Results Example
+
+```bash
+$ ./cotreat_tests/run_django_tests.sh
+====================================
+CoTreat Django Native Test Runner
+====================================
+
+Running all Django tests
+
+...
+----------------------------------------------------------------------
+Ran 23 tests in 0.293s
+
+OK
+✓ All tests passed!
+```
+
+### 🔧 Test Requirements
+
+The CoTreat tests require minimal dependencies:
+
+```bash
+# Install test dependencies (included in dev requirements)
+.venv/bin/pip install fakeredis
+```
+
+### 💡 Best Practices
+
+1. **Use CoTreat tests for daily development** - Fast feedback loop
+2. **Run tests before committing** - Ensure nothing breaks
+3. **Add tests for new features** - Keep coverage high
+4. **Check documentation** - See `cotreat_tests/` for examples
 
 ### Testing Video Processing (macOS)
 
@@ -856,10 +977,8 @@ make reset-db           # Reset database only (keeps code/dependencies)
 ### Testing
 
 ```bash
-make test               # Run all tests (backend + frontend)
-make test-backend       # Run Python tests (requires Python deps)
+make test-cotreat       # Run CoTreat backend tests (fast, no Docker - recommended)
 make test-frontend      # Run JavaScript tests (requires Node deps)
-make test-video         # Compare Docker vs local video processing
 make lint               # Run linters (Python + JavaScript)
 make lint-fix           # Auto-fix linting issues
 ```
@@ -887,7 +1006,7 @@ make help               # Show all commands with descriptions
 make quick-start        # Docker + create admin (fastest way to start)
 ```
 
-**Note:** Commands that require Python dependencies (`migrate`, `test-data`, `shell`, `test-backend`) assume you've run `make install-backend` first. Similarly, `start-frontend` and `start-backend` will automatically install their respective dependencies if needed.
+**Note:** Commands that require Python dependencies (`migrate`, `test-data`, `shell`, `test-cotreat`) assume you've run `make install-backend` first. Similarly, `start-frontend` and `start-backend` will automatically install their respective dependencies if needed.
 
 ## Quick Reference Card
 
