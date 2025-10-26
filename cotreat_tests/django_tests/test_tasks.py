@@ -155,3 +155,76 @@ class TasksAPITestCase(BaseAPITestCase):
             response.status_code,
             [status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN]
         )
+
+    def test_task_with_project_has_project_name(self):
+        """
+        Test that a task associated with a project returns the project_name field.
+
+        This verifies the change from commit 5823a367 where project_name was added
+        to the task serializer.
+        """
+        url = reverse("task-detail", kwargs={"pk": self.task3.id})
+        response = self.authenticated_client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["id"], self.task3.id)
+
+        # Verify project_name is present and correct
+        self.assertIn("project_name", response.data)
+        self.assertEqual(response.data["project_name"], "Test Project for Tasks")
+
+        # Verify project_id is also present
+        self.assertEqual(response.data["project_id"], self.test_project.id)
+
+    def test_task_without_project_has_null_project_name(self):
+        """
+        Test that a task NOT associated with a project has null project_name.
+
+        This verifies that project_name is optional and handles the case where
+        a task is not part of any project (project is optional).
+        """
+        url = reverse("task-detail", kwargs={"pk": self.task1.id})
+        response = self.authenticated_client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["id"], self.task1.id)
+
+        # Verify project_name is present but null
+        self.assertIn("project_name", response.data)
+        self.assertIsNone(response.data["project_name"])
+
+        # Verify project_id is also null
+        self.assertIsNone(response.data["project_id"])
+
+    def test_task_list_includes_project_name(self):
+        """
+        Test that the task list endpoint includes project_name field.
+
+        This verifies that the field is present in the list serializer as well
+        as the detail serializer.
+        """
+        url = reverse("task-list")
+        response = self.authenticated_client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn("results", response.data)
+
+        # Find our test tasks in the results
+        task_with_project_data = None
+        task_without_project_data = None
+
+        for task_data in response.data["results"]:
+            if task_data["id"] == self.task3.id:
+                task_with_project_data = task_data
+            elif task_data["id"] == self.task1.id:
+                task_without_project_data = task_data
+
+        # Verify task with project has correct field
+        if task_with_project_data:
+            self.assertIn("project_name", task_with_project_data)
+            self.assertEqual(task_with_project_data["project_name"], "Test Project for Tasks")
+
+        # Verify task without project has correct field
+        if task_without_project_data:
+            self.assertIn("project_name", task_without_project_data)
+            self.assertIsNone(task_without_project_data["project_name"])
