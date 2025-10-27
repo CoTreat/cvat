@@ -1,0 +1,29 @@
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Pytest cache
+.pytest_cache/
+
+# Coverage
+.coverage
+htmlcov/
+
+# Virtual environment (if created here)
+venv/
+.venv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Test databases
+*.db
+*.sqlite3
+
+# Logs
+*.log

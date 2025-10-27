@@ -650,7 +650,9 @@ class JobReadListSerializer(serializers.ListSerializer):
 
 class JobReadSerializer(serializers.ModelSerializer):
     task_id = serializers.ReadOnlyField(source="get_task_id")
+    task_name = serializers.ReadOnlyField(source="segment.task.name")
     project_id = serializers.ReadOnlyField(source="get_project_id", allow_null=True)
+    project_name = serializers.ReadOnlyField(source="segment.task.project.name", allow_null=True)
     guide_id = serializers.ReadOnlyField(source="get_guide_id", allow_null=True)
     start_frame = serializers.ReadOnlyField(source="segment.start_frame")
     stop_frame = serializers.ReadOnlyField(source="segment.stop_frame")
@@ -673,7 +675,7 @@ class JobReadSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.Job
-        fields = ('url', 'id', 'task_id', 'project_id', 'assignee', 'guide_id',
+        fields = ('url', 'id', 'task_id', 'task_name', 'project_id', 'project_name', 'assignee', 'guide_id',
             'dimension', 'bug_tracker', 'status', 'stage', 'state', 'mode', 'frame_count',
             'start_frame', 'stop_frame',
             'data_chunk_size', 'data_compressed_chunk_type', 'data_original_chunk_type',
@@ -2306,6 +2308,7 @@ class TaskReadSerializer(serializers.ModelSerializer):
     owner = BasicUserSerializer(required=False, allow_null=True)
     assignee = BasicUserSerializer(allow_null=True, required=False)
     project_id = serializers.IntegerField(required=False, allow_null=True)
+    project_name = serializers.ReadOnlyField(source='project.name', allow_null=True)
     guide_id = serializers.IntegerField(source='annotation_guide.id', required=False, allow_null=True)
     dimension = serializers.CharField(allow_blank=True, required=False)
     target_storage = StorageSerializer(required=False, allow_null=True)
@@ -2322,7 +2325,7 @@ class TaskReadSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.Task
-        fields = ('url', 'id', 'name', 'project_id', 'mode', 'owner', 'assignee',
+        fields = ('url', 'id', 'name', 'project_id', 'project_name', 'mode', 'owner', 'assignee',
             'bug_tracker', 'created_date', 'updated_date', 'overlap', 'segment_size',
             'status', 'data_chunk_size', 'data_compressed_chunk_type', 'guide_id',
             'data_original_chunk_type', 'size', 'image_quality', 'data', 'dimension',

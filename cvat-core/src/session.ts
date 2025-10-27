@@ -488,6 +488,7 @@ export class Job extends Session {
         assignee: User | null;
         stage?: JobStage;
         state?: JobState;
+        project_name?: string;
         type?: JobType;
         start_frame?: number;
         stop_frame?: number;
@@ -495,6 +496,7 @@ export class Job extends Session {
         project_id: number | null;
         guide_id: number | null;
         task_id: number;
+        task_name?: string;
         labels: Label[];
         dimension?: DimensionType;
         data_compressed_chunk_type?: ChunkType;
@@ -603,6 +605,8 @@ export class Job extends Session {
         this.#data.stage = data.stage ?? this.#data.stage;
         this.#data.state = data.state ?? this.#data.state;
         this.#data.project_id = data.project_id ?? this.#data.project_id;
+        this.#data.project_name = data.project_name ?? this.#data.project_name;
+        this.#data.task_name = data.task_name ?? this.#data.task_name;
         this.#data.guide_id = data.guide_id ?? this.#data.guide_id;
         this.#data.updated_date = data.updated_date ?? this.#data.updated_date;
         this.#data.bug_tracker = data.bug_tracker ?? this.#data.bug_tracker;
@@ -621,6 +625,10 @@ export class Job extends Session {
 
     public get state(): JobState {
         return this.#data.state;
+    }
+
+    public get projectName(): string {
+        return this.#data.project_name;
     }
 
     public get id(): number {
@@ -649,6 +657,10 @@ export class Job extends Session {
 
     public get taskId(): number {
         return this.#data.task_id;
+    }
+
+    public get taskName(): string {
+        return this.#data.task_name;
     }
 
     public get dimension(): DimensionType {
@@ -747,6 +759,7 @@ export class Job extends Session {
 export class Task extends Session {
     public name: string;
     public projectId: number | null;
+    public readonly projectName: string | null;
     public assignee: User | null;
     public bugTracker: string;
     public subset: string;
@@ -802,6 +815,7 @@ export class Task extends Session {
             id: undefined,
             name: undefined,
             project_id: null,
+            project_name: null,
             guide_id: undefined,
             status: undefined,
             size: undefined,
@@ -946,6 +960,9 @@ export class Task extends Session {
                         updateTrigger.update('projectId');
                         data.project_id = projectId;
                     },
+                },
+                projectName: {
+                    get: () => data.project_name,
                 },
                 guideId: {
                     get: () => data.guide_id,

@@ -4,13 +4,13 @@
 
 import './styles.scss';
 import React from 'react';
-import { useSelector } from 'react-redux';
-import { CombinedState } from 'reducers';
+// import { useSelector } from 'react-redux';
+// import { CombinedState } from 'reducers';
 import Layout from 'antd/lib/layout';
 import { Col, Row } from 'antd/lib/grid';
 import Title from 'antd/lib/typography/Title';
-import CVATLogo from 'components/common/cvat-logo';
-import SVGSigningBackground from '../../assets/signing-background.svg';
+// import CVATLogo from 'components/common/cvat-logo';
+// import SVGSigningBackground from '../../assets/signing-background.svg';
 
 interface SignInLayoutComponentProps {
     children: JSX.Element | JSX.Element[];
@@ -52,7 +52,7 @@ export const formSizes: FormSizes = {
 function SignInLayout(props: SignInLayoutComponentProps): JSX.Element {
     const { children } = props;
     const { Content, Header } = Layout;
-    const subtitle = useSelector((state: CombinedState) => state.about.server.subtitle);
+    // const subtitle = useSelector((state: CombinedState) => state.about.server.subtitle);
 
     const titleSizes = {
         xs: { span: 0 },
