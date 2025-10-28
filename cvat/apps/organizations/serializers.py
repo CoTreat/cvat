@@ -147,7 +147,7 @@ class InvitationWriteSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         return super().update(instance, {})
 
-    def save(self, request, **kwargs):
+    def save(self, request, **kwargs):  # pylint: disable=arguments-differ
         invitation = super().save(**kwargs)
         dummy_user = get_dummy_user(invitation.membership.user.email)
         if not to_bool(settings.ORG_INVITATION_CONFIRM) and not dummy_user:

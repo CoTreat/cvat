@@ -84,7 +84,7 @@ export const importDatasetAsync = (
         const instanceType = getInstanceType(instance);
         const resource = instanceType === 'project' ? 'dataset' : 'annotation';
 
-        const listenForImport = (rqID: string) => core.requests.listen(rqID, {
+        const listenForImport = (rqID: string): ReturnType<typeof core.requests.listen> => core.requests.listen(rqID, {
             callback: (updatedRequest) => updateRequestProgress(updatedRequest, dispatch),
         });
 

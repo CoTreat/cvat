@@ -27,7 +27,7 @@ const componentShortcuts = {
 
 registerComponentShortcuts(componentShortcuts);
 
-function SaveAnnotationsButton() {
+function SaveAnnotationsButton(): JSX.Element {
     const dispatch = useDispatch();
     const { isSaving, keyMap, normKeyMap } = useSelector((state: CombinedState) => ({
         isSaving: state.annotation.annotations.saving.uploading,

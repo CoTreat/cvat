@@ -179,7 +179,7 @@ class RequestViewSet(viewsets.GenericViewSet):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
             try:
-                return func(*args, **kwargs)
+                return func(*args, **kwargs)  # pylint: disable=not-callable
             except RedisConnectionError as ex:
                 msg = "Redis service is not available"
                 slogger.glob.exception(f"{msg}: {str(ex)}")
