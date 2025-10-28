@@ -28,6 +28,25 @@ jest.mock('../actions-menu', () => function MockJobActions() {
     return <div data-testid='job-actions'>Actions</div>;
 });
 
+jest.mock('components/common/cvat-tooltip', () => function MockCVATTooltip({ title, children }: any) {
+    return (
+        <div data-testid='cvat-tooltip'>
+            {children}
+            {title && (
+                <div data-testid='tooltip-title' style={{ display: 'none' }}>
+                    {title}
+                </div>
+            )}
+        </div>
+    );
+});
+
+jest.mock('@ant-design/icons', () => ({
+    CarryOutOutlined: () => <span data-testid='carry-out-icon'>CarryOutIcon</span>,
+    MoreOutlined: () => <span data-testid='more-icon'>MoreIcon</span>,
+    BookOutlined: () => <span data-testid='book-icon'>BookIcon</span>,
+}));
+
 // Create a mock store
 const createMockStore = (initialState = {}) => {
     const defaultState = {
@@ -99,7 +118,6 @@ describe('JobCardComponent', () => {
 
         // Check that the tooltip content contains project name
         // The tooltip content is rendered in the DOM even before hover
-        expect(screen.getByText(/Project:/)).toBeInTheDocument();
         expect(screen.getByText(/My Awesome Project/)).toBeInTheDocument();
     });
 
@@ -122,9 +140,11 @@ describe('JobCardComponent', () => {
         // Check that task name is displayed
         expect(screen.getByText('Task Without Project')).toBeInTheDocument();
 
-        // Check that project is shown as "--"
-        expect(screen.getByText(/Project:/)).toBeInTheDocument();
-        expect(screen.getByText(/--/)).toBeInTheDocument();
+        // Check that project is shown as "--" in the tooltip
+        const tooltipTitles = screen.getAllByTestId('tooltip-title');
+        expect(tooltipTitles.length).toBeGreaterThan(0);
+        const tooltipContent = tooltipTitles[0].textContent;
+        expect(tooltipContent).toContain('--');
     });
 
     it('should display task name in tooltip', () => {
@@ -141,8 +161,7 @@ describe('JobCardComponent', () => {
             </Provider>,
         );
 
-        // Check tooltip has task name - use getAllByText since it appears twice
-        expect(screen.getByText(/Task:/)).toBeInTheDocument();
+        // Check tooltip has task name - it appears twice (in tooltip and in card body)
         const taskNameElements = screen.getAllByText(/Important Annotation Task/);
         expect(taskNameElements.length).toBeGreaterThan(0);
     });

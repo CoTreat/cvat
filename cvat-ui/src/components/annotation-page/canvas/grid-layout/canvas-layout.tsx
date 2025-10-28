@@ -35,6 +35,7 @@ import ContextImage from 'components/annotation-page/canvas/views/context-image/
 import CVATTooltip from 'components/common/cvat-tooltip';
 import { useUpdateEffect } from 'utils/hooks';
 import defaultLayout, { ItemLayout, ViewType } from './canvas-layout.conf';
+import JobBreadcrumb from './job-breadcrumb';
 
 const ReactGridLayout = WidthProvider(RGL);
 
@@ -145,6 +146,7 @@ function CanvasLayout({ type }: { type?: DimensionType }): JSX.Element {
     const relatedFiles = useSelector((state: CombinedState) => state.annotation.player.frame.relatedFiles);
     const canvasInstance = useSelector((state: CombinedState) => state.annotation.canvas.instance);
     const canvasBackgroundColor = useSelector((state: CombinedState) => state.settings.player.canvasBackgroundColor);
+    const job = useSelector((state: CombinedState) => state.annotation.job.instance);
 
     const computeRowHeight = (): number => {
         const container = window.document.getElementsByClassName('cvat-annotation-header')[0];
@@ -217,6 +219,7 @@ function CanvasLayout({ type }: { type?: DimensionType }): JSX.Element {
 
     return (
         <Layout.Content>
+            <JobBreadcrumb job={job} />
             { !!rowHeight && (
                 <ReactGridLayout
                     cols={config.CANVAS_WORKSPACE_COLS}

@@ -9,13 +9,13 @@ import { useHistory } from 'react-router';
 import Card from 'antd/lib/card';
 import Descriptions from 'antd/lib/descriptions';
 import Text from 'antd/lib/typography/Text';
-import { CarryOutOutlined, MoreOutlined } from '@ant-design/icons';
+import { BookOutlined, CarryOutOutlined, MoreOutlined } from '@ant-design/icons';
 
 import { Job, JobType } from 'cvat-core-wrapper';
 import { useCardHeightHOC } from 'utils/hooks';
 import Preview from 'components/common/preview';
 import { CombinedState } from 'reducers';
-import { Tooltip } from 'antd';
+import CVATTooltip from 'components/common/cvat-tooltip';
 import JobActionsComponent from './actions-menu';
 
 const useCardHeight = useCardHeightHOC({
@@ -62,12 +62,11 @@ function JobCardComponent(props: Props): JSX.Element {
 
     const taskInfo = (
         <span>
-Project:
+            <BookOutlined />
+            {' '}
             {job.projectName ? job.projectName : '--'}
-            {' '}
             <br />
-            {' '}
-Task:
+            <CarryOutOutlined />
             {' '}
             {job.taskName}
         </span>
@@ -97,11 +96,11 @@ Task:
             )}
             hoverable
         >
-            <Tooltip title={taskInfo}>
+            <CVATTooltip title={taskInfo}>
                 <CarryOutOutlined />
                 {' '}
                 <Text strong style={{ fontSize: '12px' }}>{job.taskName}</Text>
-            </Tooltip>
+            </CVATTooltip>
             <Descriptions column={1} size='small'>
 
                 <Descriptions.Item label='Stage'>
