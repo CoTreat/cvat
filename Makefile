@@ -3,7 +3,7 @@
 
 .PHONY: help setup install-backend install-frontend start-docker start-frontend start-backend \
         stop restart migrate test test-frontend test-data test-cotreat clean reset \
-        logs shell superuser docker-only hybrid
+        logs shell superuser docker-only hybrid qa lint lint-fix type-check
 
 # Default target
 .DEFAULT_GOAL := help
@@ -173,6 +173,23 @@ test-frontend: ## Run frontend tests
 	@echo "$(GREEN)Running frontend tests...$(NC)"
 	@cd cvat-ui && yarn test
 
+qa: ## Run all quality checks (lint + tests)
+	@echo "$(CYAN)═══════════════════════════════════════════════════$(NC)"
+	@echo "$(CYAN) Running Quality Assurance Checks$(NC)"
+	@echo "$(CYAN)═══════════════════════════════════════════════════$(NC)"
+	@echo ""
+	@echo "$(YELLOW)[1/3] Running linters...$(NC)"
+	@$(MAKE) lint
+	@echo ""
+	@echo "$(YELLOW)[2/3] Running backend tests...$(NC)"
+	@$(MAKE) test-cotreat
+	@echo ""
+	@echo "$(YELLOW)[3/3] Running frontend tests...$(NC)"
+	@$(MAKE) test-frontend
+	@echo ""
+	@echo "$(GREEN)═══════════════════════════════════════════════════$(NC)"
+	@echo "$(GREEN) ✓ All quality checks passed!$(NC)"
+	@echo "$(GREEN)═══════════════════════════════════════════════════$(NC)"
 
 lint: ## Run linters
 	@echo "$(GREEN)Running linters...$(NC)"

@@ -32,7 +32,7 @@ interface InputElementParameters {
 
 const componentShortcuts: Record<string, KeyMapItem> = {};
 
-const makeKey = (index: number) => `AAM_SET_ATTR_VALUE_${index}`;
+const makeKey = (index: number): string => `AAM_SET_ATTR_VALUE_${index}`;
 
 for (const idx of Array.from({ length: 10 }, (_, i) => i)) {
     componentShortcuts[makeKey(idx)] = {

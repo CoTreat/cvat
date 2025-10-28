@@ -269,7 +269,7 @@ class InvitationViewSet(
         permission = InvitationPermission.create_scope_list(self.request)
         return permission.filter(queryset)
 
-    def create(self, request):
+    def create(self, request):  # pylint: disable=arguments-differ
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         try:
