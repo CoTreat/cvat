@@ -44,6 +44,7 @@ jest.mock('@ant-design/icons', () => ({
     CarryOutOutlined: () => <span>CarryOutIcon</span>,
     UserOutlined: () => <span>UserIcon</span>,
     AtOutlined: () => <span>AtIcon</span>,
+    BorderlessTableOutlined: () => <span>BorderlessTableIcon</span>,
 }));
 
 describe('JobBreadcrumb', () => {
@@ -70,6 +71,7 @@ describe('JobBreadcrumb', () => {
 
     it('should render breadcrumb with all items when job has all properties', () => {
         const job = createMockJob({
+            id: 123,
             projectName: 'My Project',
             taskName: 'My Task',
             stage: JobStage.ANNOTATION,
@@ -80,6 +82,7 @@ describe('JobBreadcrumb', () => {
 
         expect(screen.getByText('My Project')).toBeInTheDocument();
         expect(screen.getByText('My Task')).toBeInTheDocument();
+        expect(screen.getByText('123')).toBeInTheDocument();
         expect(screen.getByText('annotation')).toBeInTheDocument();
         expect(screen.getByText('john_doe')).toBeInTheDocument();
     });
@@ -145,15 +148,16 @@ describe('JobBreadcrumb', () => {
 
         const tooltips = screen.getAllByTestId('cvat-tooltip');
 
-        // When project exists, we expect 4 tooltips: Project, Task, Assignee, Stage
-        expect(tooltips.length).toBe(4);
+        // When project exists, we expect 5 tooltips: Project, Task, Job ID, Assignee, Stage
+        expect(tooltips.length).toBe(5);
         expect(tooltips[0]).toHaveAttribute('title', 'Project');
         expect(tooltips[1]).toHaveAttribute('title', 'Task');
-        expect(tooltips[2]).toHaveAttribute('title', 'Assignee');
-        expect(tooltips[3]).toHaveAttribute('title', 'Stage');
+        expect(tooltips[2]).toHaveAttribute('title', 'Job ID');
+        expect(tooltips[3]).toHaveAttribute('title', 'Assignee');
+        expect(tooltips[4]).toHaveAttribute('title', 'Stage');
     });
 
-    it('should render 3 tooltips when project is absent', () => {
+    it('should render 4 tooltips when project is absent', () => {
         const job = createMockJob({
             projectId: null,
             projectName: null,
@@ -166,11 +170,26 @@ describe('JobBreadcrumb', () => {
 
         const tooltips = screen.getAllByTestId('cvat-tooltip');
 
-        // Without project, we expect 3 tooltips: Task, Assignee, Stage
-        expect(tooltips.length).toBe(3);
+        // Without project, we expect 4 tooltips: Task, Job ID, Assignee, Stage
+        expect(tooltips.length).toBe(4);
         expect(tooltips[0]).toHaveAttribute('title', 'Task');
-        expect(tooltips[1]).toHaveAttribute('title', 'Assignee');
-        expect(tooltips[2]).toHaveAttribute('title', 'Stage');
+        expect(tooltips[1]).toHaveAttribute('title', 'Job ID');
+        expect(tooltips[2]).toHaveAttribute('title', 'Assignee');
+        expect(tooltips[3]).toHaveAttribute('title', 'Stage');
+    });
+
+    it('should display job ID', () => {
+        const job = createMockJob({
+            id: 456,
+            projectName: 'Test Project',
+            taskName: 'Test Task',
+            stage: JobStage.ANNOTATION,
+            assignee: { username: 'testuser' },
+        });
+
+        render(<JobBreadcrumb job={job} />);
+
+        expect(screen.getByText('456')).toBeInTheDocument();
     });
 
     it('should return null when job is null', () => {

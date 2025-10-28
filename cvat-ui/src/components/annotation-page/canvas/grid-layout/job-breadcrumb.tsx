@@ -6,7 +6,7 @@ import React from 'react';
 import { Breadcrumb } from 'antd';
 import CVATTooltip from 'components/common/cvat-tooltip';
 import {
-    BookOutlined, CarryOutOutlined, UserOutlined,
+    BookOutlined, BorderlessTableOutlined, CarryOutOutlined, UserOutlined,
 } from '@ant-design/icons';
 
 interface JobBreadcrumbProps {
@@ -36,6 +36,13 @@ function JobBreadcrumb({ job }: JobBreadcrumbProps): JSX.Element | null {
                     <CarryOutOutlined />
                     {' '}
                     {job?.taskName ? job.taskName : '--'}
+                </CVATTooltip>
+            </Breadcrumb.Item>
+            <Breadcrumb.Item>
+                <CVATTooltip title='Job ID'>
+                    <BorderlessTableOutlined />
+                    {' '}
+                    {job?.id}
                 </CVATTooltip>
             </Breadcrumb.Item>
             <Breadcrumb.Item>
