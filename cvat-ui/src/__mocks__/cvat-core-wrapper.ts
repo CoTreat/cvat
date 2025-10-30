@@ -20,6 +20,55 @@ export enum JobState {
     COMPLETED = 'completed',
 }
 
+export enum ObjectType {
+    SHAPE = 'shape',
+    TRACK = 'track',
+    TAG = 'tag',
+}
+
+export enum ShapeType {
+    RECTANGLE = 'rectangle',
+    POLYGON = 'polygon',
+    POLYLINE = 'polyline',
+    POINTS = 'points',
+    ELLIPSE = 'ellipse',
+    CUBOID = 'cuboid',
+    SKELETON = 'skeleton',
+    MASK = 'mask',
+}
+
+export enum DimensionType {
+    DIMENSION_2D = '2d',
+    DIMENSION_3D = '3d',
+}
+
+export enum LabelType {
+    TAG = 'tag',
+    ANY = 'any',
+    RECTANGLE = 'rectangle',
+    POLYGON = 'polygon',
+    POLYLINE = 'polyline',
+    POINTS = 'points',
+    ELLIPSE = 'ellipse',
+    CUBOID = 'cuboid',
+    SKELETON = 'skeleton',
+    MASK = 'mask',
+}
+
+export class Label {
+    public id: number;
+    public name: string;
+    public type: LabelType;
+    public attributes: any[];
+
+    constructor(data: any) {
+        this.id = data.id;
+        this.name = data.name;
+        this.type = data.type;
+        this.attributes = data.attributes || [];
+    }
+}
+
 export class Job {
     public id: number;
     public taskId: number;
@@ -34,6 +83,8 @@ export class Job {
     public type: JobType;
     public dimension: string;
     public consensusReplicas: number;
+    public labels: Label[];
+    public mode: string;
 
     constructor(data: any) {
         this.id = data.id;
@@ -49,12 +100,40 @@ export class Job {
         this.type = data.type;
         this.dimension = data.dimension || '2d';
         this.consensusReplicas = data.consensusReplicas || 0;
+        this.labels = data.labels || [];
+        this.mode = data.mode || 'annotation';
     }
 }
+
+export class ObjectState {}
+export class MLModel {}
+export class QualityConflict {}
+export class JobValidationLayout {}
+
+export const getCore = jest.fn(() => ({
+    // Add any methods that might be called on the cvat core object
+    config: {},
+    server: {},
+    lambda: {},
+    classes: {
+        Job,
+        Label,
+    },
+}));
 
 export default {
     Job,
     JobType,
     JobStage,
     JobState,
+    ObjectType,
+    ShapeType,
+    DimensionType,
+    LabelType,
+    Label,
+    ObjectState,
+    MLModel,
+    QualityConflict,
+    JobValidationLayout,
+    getCore,
 };

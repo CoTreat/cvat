@@ -40,7 +40,7 @@ function LabelFilterDropdown(props: Props): JSX.Element {
                 allowClear={false}
                 size='small'
                 style={{ minWidth: 80, margin: '0 16px 0 8px' }}
-                dropdownMatchSelectWidth={false}
+                // dropdownMatchSelectWidth={false}
                 popupMatchSelectWidth={false}
             >
                 {labels.map((label) => (

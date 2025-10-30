@@ -2,4 +2,12 @@
 //
 // SPDX-License-Identifier: MIT
 
-module.exports = 'test-file-stub';
+const React = require('react');
+
+// For SVG files that are imported as React components
+module.exports = function MockSVGComponent(props) {
+    return React.createElement('svg', props, null);
+};
+
+// Also export as default for default imports
+module.exports.default = module.exports;
