@@ -1338,6 +1338,7 @@ export default class Collection {
             annotationsFilters?: object[];
             generalFilters?: {
                 isEmptyFrame?: boolean;
+                labelName?: string | null;
             };
         },
     ): number | null {
@@ -1345,13 +1346,24 @@ export default class Collection {
         let { annotationsFilters } = searchParameters;
 
         if ('generalFilters' in searchParameters) {
+            const { generalFilters } = searchParameters;
+
             // if we are looking for en empty frame, run a dedicated algorithm
-            if (searchParameters.generalFilters.isEmptyFrame) {
+            if (generalFilters.isEmptyFrame === true) {
                 return this._searchEmpty(frameFrom, frameTo, { allowDeletedFrames });
             }
 
-            // not empty frames corresponds to default behaviour of the function with empty annotation filters
-            annotationsFilters = [];
+            // if we are looking for frames with a specific label, create a filter for that
+            if (generalFilters.labelName !== undefined && generalFilters.labelName !== null) {
+                annotationsFilters = [{
+                    and: [{
+                        '==': [{ var: 'label' }, generalFilters.labelName],
+                    }],
+                }];
+            } else {
+                // not empty frames corresponds to default behaviour of the function with empty annotation filters
+                annotationsFilters = [];
+            }
         }
 
         const sign = Math.sign(frameTo - frameFrom);

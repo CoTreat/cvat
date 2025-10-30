@@ -144,7 +144,7 @@
 }
 
 .cvat-player-slider.ant-slider {
-    width: 350px;
+    width: 300px;
     margin: 0;
     margin-top: $grid-unit-size * -0.5;
 
@@ -177,7 +177,7 @@
 }
 
 .cvat-player-filename-wrapper {
-    max-width: $grid-unit-size * 30;
+    max-width: $grid-unit-size * 25;
     max-height: $grid-unit-size * 3;
     line-height: $grid-unit-size * 3;
 
@@ -227,7 +227,7 @@
     .ant-input-number-input {
         box-sizing: content-box;
         width: var(--frame-input-width, 6ch);
-        min-width: 6ch;
+        min-width: 4ch;
         max-width: 10ch;
     }
 }
@@ -478,7 +478,9 @@
 .cvat-player-previous-filtered-inlined-button,
 .cvat-player-next-filtered-inlined-button,
 .cvat-player-previous-empty-inlined-button,
-.cvat-player-next-empty-inlined-button {
+.cvat-player-next-empty-inlined-button,
+.cvat-player-previous-label-inlined-button,
+.cvat-player-next-label-inlined-button {
     color: $player-buttons-color;
 
     &:not(:first-child) {

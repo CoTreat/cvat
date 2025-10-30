@@ -16,11 +16,13 @@ import {
     PreviousIcon,
     PreviousFilteredIcon,
     PreviousEmptyIcon,
+    PreviousLabelIcon,
     PlayIcon,
     PauseIcon,
     NextIcon,
     NextFilteredIcon,
     NextEmptyIcon,
+    NextLabelIcon,
     ForwardJumpIcon,
     LastIcon,
 } from 'icons';
@@ -118,6 +120,14 @@ function PlayerButtons(props: Props): JSX.Element {
         onSearchAnnotations,
     } = props;
 
+    const [prevPopoverVisible, setPrevPopoverVisible] = React.useState(false);
+    const [nextPopoverVisible, setNextPopoverVisible] = React.useState(false);
+
+    const handleSetNavigationType = (navType: NavigationType, popoverSetter: (visible: boolean) => void): void => {
+        setNavigationType(navType);
+        popoverSetter(false);
+    };
+
     const handlers: Partial<Record<keyof typeof componentShortcuts, ((event?: KeyboardEvent) => void)>> = {
         NEXT_FRAME: (event: KeyboardEvent | undefined) => {
             event?.preventDefault();
@@ -154,9 +164,11 @@ function PlayerButtons(props: Props): JSX.Element {
     const prevRegularText = 'Go back';
     const prevFilteredText = 'Go back with a filter';
     const prevEmptyText = 'Go back to an empty frame';
+    const prevLabelText = 'Go back with selected label';
     const nextRegularText = 'Go next';
     const nextFilteredText = 'Go next with a filter';
     const nextEmptyText = 'Go next to an empty frame';
+    const nextLabelText = 'Go next with selected label';
 
     let prevButton = <Icon className='cvat-player-previous-button' component={PreviousIcon} onClick={onPrevFrame} />;
     let prevButtonTooltipMessage = prevRegularText;
@@ -174,6 +186,11 @@ function PlayerButtons(props: Props): JSX.Element {
             <Icon className='cvat-player-previous-button-empty' component={PreviousEmptyIcon} onClick={onPrevFrame} />
         );
         prevButtonTooltipMessage = prevEmptyText;
+    } else if (navigationType === NavigationType.BY_LABEL) {
+        prevButton = (
+            <Icon className='cvat-player-previous-button-label' component={PreviousLabelIcon} onClick={onPrevFrame} />
+        );
+        prevButtonTooltipMessage = prevLabelText;
     }
 
     let nextButton = <Icon className='cvat-player-next-button' component={NextIcon} onClick={onNextFrame} />;
@@ -186,6 +203,9 @@ function PlayerButtons(props: Props): JSX.Element {
     } else if (navigationType === NavigationType.EMPTY) {
         nextButton = <Icon className='cvat-player-next-button-empty' component={NextEmptyIcon} onClick={onNextFrame} />;
         nextButtonTooltipMessage = nextEmptyText;
+    } else if (navigationType === NavigationType.BY_LABEL) {
+        nextButton = <Icon className='cvat-player-next-button-label' component={NextLabelIcon} onClick={onNextFrame} />;
+        nextButtonTooltipMessage = nextLabelText;
     }
 
     const navIconStyle: CSSProperties = workspace === Workspace.SINGLE_SHAPE ? {
@@ -196,7 +216,7 @@ function PlayerButtons(props: Props): JSX.Element {
     return (
         <Col className='cvat-player-buttons'>
             <GlobalHotKeys keyMap={subKeyMap(componentShortcuts, keyMap)} handlers={handlers} />
-            <CVATTooltip title='Go to the first frame'>
+            <CVATTooltip placement='top' title='Go to the first frame'>
                 <Icon
                     style={navIconStyle}
                     className='cvat-player-first-button'
@@ -204,7 +224,7 @@ function PlayerButtons(props: Props): JSX.Element {
                     onClick={onFirstFrame}
                 />
             </CVATTooltip>
-            <CVATTooltip title={`Go back with a step ${backwardShortcut}`}>
+            <CVATTooltip placement='top' title={`Go back with a step ${backwardShortcut}`}>
                 <Icon
                     style={navIconStyle}
                     className='cvat-player-backward-button'
@@ -215,27 +235,37 @@ function PlayerButtons(props: Props): JSX.Element {
             <Popover
                 trigger='contextMenu'
                 placement='bottom'
+                overlayInnerStyle={{ padding: '8px 16px' }}
+                open={prevPopoverVisible}
+                onOpenChange={setPrevPopoverVisible}
                 content={(
                     <>
-                        <CVATTooltip title={`${prevRegularText}`}>
+                        <CVATTooltip placement='bottom' title={`${prevRegularText}`}>
                             <Icon
                                 className='cvat-player-previous-inlined-button'
                                 component={PreviousIcon}
-                                onClick={() => setNavigationType(NavigationType.REGULAR)}
+                                onClick={() => handleSetNavigationType(NavigationType.REGULAR, setPrevPopoverVisible)}
                             />
                         </CVATTooltip>
-                        <CVATTooltip title={`${prevFilteredText}`}>
+                        <CVATTooltip placement='bottom' title={`${prevFilteredText}`}>
                             <Icon
                                 className='cvat-player-previous-filtered-inlined-button'
                                 component={PreviousFilteredIcon}
-                                onClick={() => setNavigationType(NavigationType.FILTERED)}
+                                onClick={() => handleSetNavigationType(NavigationType.FILTERED, setPrevPopoverVisible)}
                             />
                         </CVATTooltip>
-                        <CVATTooltip title={`${prevEmptyText}`}>
+                        <CVATTooltip placement='bottom' title={`${prevEmptyText}`}>
                             <Icon
                                 className='cvat-player-previous-empty-inlined-button'
                                 component={PreviousEmptyIcon}
-                                onClick={() => setNavigationType(NavigationType.EMPTY)}
+                                onClick={() => handleSetNavigationType(NavigationType.EMPTY, setPrevPopoverVisible)}
+                            />
+                        </CVATTooltip>
+                        <CVATTooltip placement='bottom' title={`${prevLabelText}`}>
+                            <Icon
+                                className='cvat-player-previous-label-inlined-button'
+                                component={PreviousLabelIcon}
+                                onClick={() => handleSetNavigationType(NavigationType.BY_LABEL, setPrevPopoverVisible)}
                             />
                         </CVATTooltip>
                     </>
@@ -247,7 +277,7 @@ function PlayerButtons(props: Props): JSX.Element {
             </Popover>
 
             {!playing ? (
-                <CVATTooltip title={`Play ${playPauseShortcut}`}>
+                <CVATTooltip placement='top' title={`Play ${playPauseShortcut}`}>
                     <Icon
                         style={navIconStyle}
                         className='cvat-player-play-button'
@@ -256,7 +286,7 @@ function PlayerButtons(props: Props): JSX.Element {
                     />
                 </CVATTooltip>
             ) : (
-                <CVATTooltip title={`Pause ${playPauseShortcut}`}>
+                <CVATTooltip placement='top' title={`Pause ${playPauseShortcut}`}>
                     <Icon
                         style={navIconStyle}
                         className='cvat-player-pause-button'
@@ -269,27 +299,37 @@ function PlayerButtons(props: Props): JSX.Element {
             <Popover
                 trigger='contextMenu'
                 placement='bottom'
+                overlayInnerStyle={{ padding: '8px 16px' }}
+                open={nextPopoverVisible}
+                onOpenChange={setNextPopoverVisible}
                 content={(
                     <>
-                        <CVATTooltip title={`${nextRegularText}`}>
+                        <CVATTooltip placement='bottom' title={`${nextRegularText}`}>
                             <Icon
                                 className='cvat-player-next-inlined-button'
                                 component={NextIcon}
-                                onClick={() => setNavigationType(NavigationType.REGULAR)}
+                                onClick={() => handleSetNavigationType(NavigationType.REGULAR, setNextPopoverVisible)}
                             />
                         </CVATTooltip>
-                        <CVATTooltip title={`${nextFilteredText}`}>
+                        <CVATTooltip placement='bottom' title={`${nextFilteredText}`}>
                             <Icon
                                 className='cvat-player-next-filtered-inlined-button'
                                 component={NextFilteredIcon}
-                                onClick={() => setNavigationType(NavigationType.FILTERED)}
+                                onClick={() => handleSetNavigationType(NavigationType.FILTERED, setNextPopoverVisible)}
                             />
                         </CVATTooltip>
-                        <CVATTooltip title={`${nextEmptyText}`}>
+                        <CVATTooltip placement='bottom' title={`${nextEmptyText}`}>
                             <Icon
                                 className='cvat-player-next-empty-inlined-button'
                                 component={NextEmptyIcon}
-                                onClick={() => setNavigationType(NavigationType.EMPTY)}
+                                onClick={() => handleSetNavigationType(NavigationType.EMPTY, setNextPopoverVisible)}
+                            />
+                        </CVATTooltip>
+                        <CVATTooltip placement='bottom' title={`${nextLabelText}`}>
+                            <Icon
+                                className='cvat-player-next-label-inlined-button'
+                                component={NextLabelIcon}
+                                onClick={() => handleSetNavigationType(NavigationType.BY_LABEL, setNextPopoverVisible)}
                             />
                         </CVATTooltip>
                     </>
@@ -299,7 +339,7 @@ function PlayerButtons(props: Props): JSX.Element {
                     {nextButton}
                 </CVATTooltip>
             </Popover>
-            <CVATTooltip title={`Go next with a step ${forwardShortcut}`}>
+            <CVATTooltip placement='top' title={`Go next with a step ${forwardShortcut}`}>
                 <Icon
                     style={navIconStyle}
                     className='cvat-player-forward-button'
@@ -307,7 +347,7 @@ function PlayerButtons(props: Props): JSX.Element {
                     onClick={onForward}
                 />
             </CVATTooltip>
-            <CVATTooltip title='Go to the last frame'>
+            <CVATTooltip placement='top' title='Go to the last frame'>
                 <Icon
                     style={navIconStyle}
                     className='cvat-player-last-button'

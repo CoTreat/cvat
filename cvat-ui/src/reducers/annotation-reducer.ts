@@ -101,6 +101,7 @@ const defaultState: AnnotationState = {
             changeFrameEvent: null,
         },
         navigationType: NavigationType.REGULAR,
+        selectedLabelName: null,
         ranges: '',
         playing: false,
         frameAngles: [],
@@ -1083,6 +1084,15 @@ export default (state = defaultState, action: AnyAction): AnnotationState => {
                 player: {
                     ...state.player,
                     navigationType: action.payload.navigationType,
+                },
+            };
+        }
+        case AnnotationActionTypes.SET_LABEL_FILTER: {
+            return {
+                ...state,
+                player: {
+                    ...state.player,
+                    selectedLabelName: action.payload.labelName,
                 },
             };
         }
