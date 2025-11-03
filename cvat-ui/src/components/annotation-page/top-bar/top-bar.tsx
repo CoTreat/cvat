@@ -15,6 +15,7 @@ import LeftGroup from './left-group';
 import PlayerButtons from './player-buttons';
 import PlayerNavigation from './player-navigation';
 import RightGroup from './right-group';
+import LabelFilterDropdown from './label-filter-dropdown';
 
 interface Props {
     playing: boolean;
@@ -73,6 +74,8 @@ interface Props {
     switchNavigationBlocked(blocked: boolean): void;
     setNavigationType(navigationType: NavigationType): void;
     switchShowSearchPallet(visible: boolean): void;
+    selectedLabelName: string | null;
+    onSelectLabel(labelName: string | null): void;
 }
 
 export default function AnnotationTopBarComponent(props: Props): JSX.Element {
@@ -133,6 +136,8 @@ export default function AnnotationTopBarComponent(props: Props): JSX.Element {
         switchNavigationBlocked,
         switchShowSearchPallet,
         showSearchFrameByName,
+        selectedLabelName,
+        onSelectLabel,
     } = props;
 
     const playerItems: [JSX.Element, number][] = [];
@@ -160,6 +165,16 @@ export default function AnnotationTopBarComponent(props: Props): JSX.Element {
             setNavigationType={setNavigationType}
         />
     ), 0]);
+
+    playerItems.push([(
+        <LabelFilterDropdown
+            key='label_filter'
+            labels={jobInstance.labels}
+            selectedLabelName={selectedLabelName}
+            onSelectLabel={onSelectLabel}
+            navigationType={navigationType}
+        />
+    ), 5]);
 
     playerItems.push([(
         <PlayerNavigation

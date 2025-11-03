@@ -170,6 +170,7 @@ export enum AnnotationActionTypes {
     RESTORE_FRAME_FAILED = 'RESTORE_FRAME_FAILED',
     UPDATE_BRUSH_TOOLS_CONFIG = 'UPDATE_BRUSH_TOOLS_CONFIG',
     HIGHLIGHT_CONFLICT = 'HIGHLIGHT_CONFCLICT',
+    SET_LABEL_FILTER = 'SET_LABEL_FILTER',
 }
 
 export function saveLogsAsync(): ThunkAction {
@@ -1299,7 +1300,8 @@ export function searchAnnotationsAsync(
     frameFrom: number,
     frameTo: number,
     generalFilters?: {
-        isEmptyFrame: boolean;
+        isEmptyFrame?: boolean;
+        labelName?: string | null;
     },
 ): ThunkAction {
     return async (dispatch: ThunkDispatch, getState): Promise<void> => {
@@ -1552,6 +1554,15 @@ export function setNavigationType(navigationType: NavigationType): AnyAction {
     };
 }
 
+export function setLabelFilter(labelName: string | null): AnyAction {
+    return {
+        type: AnnotationActionTypes.SET_LABEL_FILTER,
+        payload: {
+            labelName,
+        },
+    };
+}
+
 export function deleteFrameAsync(frame: number): ThunkAction {
     return async (dispatch: ThunkDispatch): Promise<void> => {
         const { jobInstance } = receiveAnnotationsParameters();
@@ -1641,7 +1652,6 @@ export function changeHideActiveObjectAsync(hide: boolean): ThunkAction {
                 objectState.hidden = hide;
                 await dispatch(updateAnnotationsAsync([objectState]));
             }
-
             dispatch({
                 type: AnnotationActionTypes.HIDE_ACTIVE_OBJECT,
                 payload: {

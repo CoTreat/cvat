@@ -28,8 +28,41 @@ Descriptions.Item = function ({ label, children }: any) {
     );
 };
 
+export function Popover({ children, content, open, onOpenChange, trigger, ...props }: any) {
+    const [isOpen, setIsOpen] = React.useState(open || false);
+
+    React.useEffect(() => {
+        if (typeof open !== 'undefined') {
+            setIsOpen(open);
+        }
+    }, [open]);
+
+    const handleTrigger = (e: any) => {
+        if (trigger === 'contextMenu' && e.type === 'contextmenu') {
+            e.preventDefault();
+            const newOpenState = !isOpen;
+            setIsOpen(newOpenState);
+            if (onOpenChange) {
+                onOpenChange(newOpenState);
+            }
+        }
+    };
+
+    return (
+        <div data-testid='popover-wrapper' onContextMenu={handleTrigger}>
+            {children}
+            {isOpen && (
+                <div data-testid='popover-content' {...props}>
+                    {content}
+                </div>
+            )}
+        </div>
+    );
+}
+
 export default {
     Card,
     Tooltip,
     Descriptions,
+    Popover,
 };

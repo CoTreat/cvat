@@ -366,8 +366,16 @@ export function implementJob(Job: typeof JobClass): typeof JobClass {
                 throw new ArgumentError('Annotations filters must be an array');
             }
 
-            if ('generalFilters' in searchParameters && typeof searchParameters.generalFilters.isEmptyFrame !== 'boolean') {
-                throw new ArgumentError('General filter isEmptyFrame must be a boolean');
+            if ('generalFilters' in searchParameters) {
+                const { generalFilters } = searchParameters;
+                if ('isEmptyFrame' in generalFilters && typeof generalFilters.isEmptyFrame !== 'boolean') {
+                    throw new ArgumentError('General filter isEmptyFrame must be a boolean');
+                }
+                if ('labelName' in generalFilters &&
+                    generalFilters.labelName !== null &&
+                    typeof generalFilters.labelName !== 'string') {
+                    throw new ArgumentError('General filter labelName must be a string or null');
+                }
             }
 
             if ('annotationsFilters' in searchParameters && 'generalFilters' in searchParameters) {
@@ -1070,8 +1078,16 @@ export function implementTask(Task: typeof TaskClass): typeof TaskClass {
                 throw new ArgumentError('Annotations filters must be an array');
             }
 
-            if ('generalFilters' in searchParameters && typeof searchParameters.generalFilters.isEmptyFrame !== 'boolean') {
-                throw new ArgumentError('General filter isEmptyFrame must be a boolean');
+            if ('generalFilters' in searchParameters) {
+                const { generalFilters } = searchParameters;
+                if ('isEmptyFrame' in generalFilters && typeof generalFilters.isEmptyFrame !== 'boolean') {
+                    throw new ArgumentError('General filter isEmptyFrame must be a boolean');
+                }
+                if ('labelName' in generalFilters &&
+                    generalFilters.labelName !== null &&
+                    typeof generalFilters.labelName !== 'string') {
+                    throw new ArgumentError('General filter labelName must be a string or null');
+                }
             }
 
             if ('annotationsFilters' in searchParameters && 'generalFilters' in searchParameters) {

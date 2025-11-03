@@ -25,6 +25,7 @@ import {
     switchNavigationBlocked as switchNavigationBlockedAction,
     setNavigationType as setNavigationTypeAction,
     switchShowSearchFramesModal as switchShowSearchFramesModalAction,
+    setLabelFilter as setLabelFilterAction,
 } from 'actions/annotation-actions';
 import AnnotationTopBarComponent from 'components/annotation-page/top-bar/top-bar';
 import { Canvas } from 'cvat-canvas-wrapper';
@@ -73,6 +74,7 @@ interface StateToProps {
     annotationFilters: object[];
     initialOpenGuide: boolean;
     navigationType: NavigationType;
+    selectedLabelName: string | null;
     showSearchFrameByName: boolean;
 }
 
@@ -91,6 +93,7 @@ interface DispatchToProps {
         frameTo: number,
         generalFilters?: {
             isEmptyFrame: boolean;
+            labelName: string | null;
         },
     ): void;
     setForceExitAnnotationFlag(forceExit: boolean): void;
@@ -100,6 +103,7 @@ interface DispatchToProps {
     restoreFrame(frame: number): void;
     switchNavigationBlocked(blocked: boolean): void;
     setNavigationType(navigationType: NavigationType): void;
+    setLabelFilter(labelName: string | null): void;
 }
 
 function mapStateToProps(state: CombinedState): StateToProps {
@@ -116,6 +120,7 @@ function mapStateToProps(state: CombinedState): StateToProps {
                     fetching: frameFetching,
                 },
                 navigationType,
+                selectedLabelName,
             },
             annotations: {
                 saving: { uploading: saving, forceExit },
@@ -173,6 +178,7 @@ function mapStateToProps(state: CombinedState): StateToProps {
         annotationFilters,
         initialOpenGuide,
         navigationType,
+        selectedLabelName,
         showSearchFrameByName,
     };
 }
@@ -210,6 +216,7 @@ function mapDispatchToProps(dispatch: any): DispatchToProps {
             frameTo: number,
             generalFilters?: {
                 isEmptyFrame: boolean;
+                labelName: string | null;
             },
         ): void {
             dispatch(searchAnnotationsAsync(sessionInstance, frameFrom, frameTo, generalFilters));
@@ -234,6 +241,9 @@ function mapDispatchToProps(dispatch: any): DispatchToProps {
         },
         setNavigationType(navigationType: NavigationType): void {
             dispatch(setNavigationTypeAction(navigationType));
+        },
+        setLabelFilter(labelName: string | null): void {
+            dispatch(setLabelFilterAction(labelName));
         },
     };
 }
@@ -283,12 +293,22 @@ class AnnotationTopBarContainer extends React.PureComponent<Props> {
     }
 
     public componentDidUpdate(prevProps: Props): void {
-        const { autoSaveInterval } = this.props;
+        const {
+            autoSaveInterval, navigationType, selectedLabelName, setLabelFilter, jobInstance,
+        } = this.props;
 
         if (autoSaveInterval !== prevProps.autoSaveInterval) {
             if (this.autoSaveInterval) window.clearInterval(this.autoSaveInterval);
             this.autoSaveInterval = window.setInterval(this.autoSave.bind(this), autoSaveInterval);
         }
+
+        // Auto-select first label when switching to BY_LABEL mode
+        if (navigationType === NavigationType.BY_LABEL && prevProps.navigationType !== NavigationType.BY_LABEL) {
+            if (selectedLabelName === null && jobInstance.labels.length > 0) {
+                setLabelFilter(jobInstance.labels[0].name);
+            }
+        }
+
         this.handlePlayIfNecessary();
     }
 
@@ -419,7 +439,7 @@ class AnnotationTopBarContainer extends React.PureComponent<Props> {
     private onPrevFrame = async (): Promise<void> => {
         const {
             frameNumber, jobInstance, playing, searchAnnotations,
-            onSwitchPlay, showDeletedFrames, navigationType,
+            onSwitchPlay, showDeletedFrames, navigationType, selectedLabelName,
         } = this.props;
         const { startFrame } = jobInstance;
 
@@ -439,8 +459,10 @@ class AnnotationTopBarContainer extends React.PureComponent<Props> {
                 this.changeFrame(newFrame);
             } else if (navigationType === NavigationType.FILTERED) {
                 searchAnnotations(jobInstance, newFrame, startFrame);
-            } else {
+            } else if (navigationType === NavigationType.EMPTY) {
                 searchAnnotations(jobInstance, newFrame, startFrame, { isEmptyFrame: true });
+            } else if (navigationType === NavigationType.BY_LABEL) {
+                searchAnnotations(jobInstance, newFrame, startFrame, { labelName: selectedLabelName });
             }
         }
     };
@@ -448,7 +470,7 @@ class AnnotationTopBarContainer extends React.PureComponent<Props> {
     private onNextFrame = async (): Promise<void> => {
         const {
             frameNumber, jobInstance, playing, searchAnnotations,
-            onSwitchPlay, showDeletedFrames, navigationType,
+            onSwitchPlay, showDeletedFrames, navigationType, selectedLabelName,
         } = this.props;
         const { stopFrame } = jobInstance;
 
@@ -467,8 +489,10 @@ class AnnotationTopBarContainer extends React.PureComponent<Props> {
                 this.changeFrame(newFrame);
             } else if (navigationType === NavigationType.FILTERED) {
                 searchAnnotations(jobInstance, newFrame, stopFrame);
-            } else {
+            } else if (navigationType === NavigationType.EMPTY) {
                 searchAnnotations(jobInstance, newFrame, stopFrame, { isEmptyFrame: true });
+            } else if (navigationType === NavigationType.BY_LABEL) {
+                searchAnnotations(jobInstance, newFrame, stopFrame, { labelName: selectedLabelName });
             }
         }
     };
@@ -522,6 +546,11 @@ class AnnotationTopBarContainer extends React.PureComponent<Props> {
                 searchAnnotations(jobInstance, frameNumber - 1, startFrame);
             }
         }
+    };
+
+    private onSelectLabel = (labelName: string | null): void => {
+        const { setLabelFilter } = this.props;
+        setLabelFilter(labelName);
     };
 
     private onChangePlayerSliderValue = async (value: number): Promise<void> => {
@@ -660,10 +689,13 @@ class AnnotationTopBarContainer extends React.PureComponent<Props> {
             setNavigationType,
             switchShowSearchPallet,
             showSearchFrameByName,
+            selectedLabelName,
         } = this.props;
 
         return (
             <AnnotationTopBarComponent
+                selectedLabelName={selectedLabelName}
+                onSelectLabel={this.onSelectLabel}
                 showStatistics={this.showStatistics}
                 showFilters={this.showFilters}
                 onSwitchPlay={this.onSwitchPlay}

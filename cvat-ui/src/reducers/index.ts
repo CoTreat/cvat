@@ -717,6 +717,7 @@ export enum NavigationType {
     REGULAR = 'regular',
     FILTERED = 'filtered',
     EMPTY = 'empty',
+    BY_LABEL = 'by_label',
 }
 
 export interface EditingState {
@@ -783,6 +784,7 @@ export interface AnnotationState {
             changeFrameEvent: Event | null;
         };
         navigationType: NavigationType;
+        selectedLabelName: string | null;
         ranges: string;
         navigationBlocked: boolean;
         playing: boolean;
