@@ -512,7 +512,11 @@ function HeaderComponent(props: Props): JSX.Element {
                         href='/analytics'
                         onClick={(event: React.MouseEvent): void => {
                             event.preventDefault();
-                            window.open('/analytics', '_blank');
+                            // In hybrid dev mode (localhost:3000), open Grafana directly
+                            // In production/Docker mode, use /analytics which is proxied by Traefik
+                            const isDevMode = window.location.hostname === 'localhost' && window.location.port === '3000';
+                            const analyticsUrl = isDevMode ? 'http://localhost:3001' : '/analytics';
+                            window.open(analyticsUrl, '_blank');
                         }}
                     >
                         Analytics

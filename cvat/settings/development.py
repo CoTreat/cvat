@@ -64,3 +64,24 @@ SILKY_MAX_RECORDED_REQUESTS = 10**4
 DATABASES["default"]["HOST"] = os.getenv("CVAT_POSTGRES_HOST", "localhost")
 
 SMOKESCREEN_ENABLED = False
+
+# Enable Analytics plugin for development. This overrides the base setting just for development.
+ANALYTICS_ENABLED = True
+
+# Enable Vector logger for analytics events in hybrid dev mode
+# Set environment variables if not already set (for hybrid dev mode where Django runs locally)
+if not os.getenv("DJANGO_LOG_SERVER_HOST"):
+    os.environ.setdefault("DJANGO_LOG_SERVER_HOST", "localhost")
+if not os.getenv("DJANGO_LOG_SERVER_PORT"):
+    os.environ.setdefault("DJANGO_LOG_SERVER_PORT", "8282")
+
+# Update handler config to use correct values (handler config is evaluated at module load time)
+# Ensure it uses localhost:8282 for hybrid dev mode
+if "vector" in LOGGING["handlers"]:
+    LOGGING["handlers"]["vector"]["host"] = os.getenv("DJANGO_LOG_SERVER_HOST", "localhost")
+    LOGGING["handlers"]["vector"]["port"] = int(os.getenv("DJANGO_LOG_SERVER_PORT", "8282"))
+
+# Ensure vector handler is attached for development (base.py only adds it if DJANGO_LOG_SERVER_HOST is set)
+# Since we just set it above, we need to manually add the handler
+if "vector" not in LOGGING["loggers"]["vector"]["handlers"]:
+    LOGGING["loggers"]["vector"]["handlers"].append("vector")

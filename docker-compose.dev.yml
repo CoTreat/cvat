@@ -119,3 +119,10 @@ services:
   cvat_vector:
     ports:
       - '127.0.0.1:8282:80'
+
+  cvat_grafana:
+    ports:
+      - '127.0.0.1:3001:3000'
+    environment:
+      # Override root_url for direct access in development mode (without /analytics subpath)
+      GF_SERVER_ROOT_URL: http://localhost:3001
