@@ -45,7 +45,12 @@ jest.mock('@ant-design/icons', () => ({
     CarryOutOutlined: () => <span data-testid='carry-out-icon'>CarryOutIcon</span>,
     MoreOutlined: () => <span data-testid='more-icon'>MoreIcon</span>,
     BookOutlined: () => <span data-testid='book-icon'>BookIcon</span>,
+    HistoryOutlined: () => <span data-testid='history-icon'>HistoryIcon</span>,
 }));
+
+jest.mock('../../job-item/job-history-modal', () => function MockJobHistoryModal() {
+    return <div data-testid='job-history-modal'>Job History Modal</div>;
+});
 
 // Create a mock store
 const createMockStore = (initialState = {}) => {

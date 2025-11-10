@@ -45,7 +45,13 @@ jest.mock('@ant-design/icons', () => ({
     UserOutlined: () => <span>UserIcon</span>,
     AtOutlined: () => <span>AtIcon</span>,
     BorderlessTableOutlined: () => <span>BorderlessTableIcon</span>,
+    HistoryOutlined: () => <span>HistoryIcon</span>,
 }));
+
+// Mock JobHistoryModal
+jest.mock('../../../../job-item/job-history-modal', () => function MockJobHistoryModal() {
+    return <div data-testid='job-history-modal'>Job History Modal</div>;
+});
 
 describe('JobBreadcrumb', () => {
     const createMockJob = (overrides = {}): Job => {
@@ -148,13 +154,14 @@ describe('JobBreadcrumb', () => {
 
         const tooltips = screen.getAllByTestId('cvat-tooltip');
 
-        // When project exists, we expect 5 tooltips: Project, Task, Job ID, Assignee, Stage
-        expect(tooltips.length).toBe(5);
+        // When project exists, we expect 6 tooltips: Project, Task, Job ID, History, Assignee, Stage
+        expect(tooltips.length).toBe(6);
         expect(tooltips[0]).toHaveAttribute('title', 'Project');
         expect(tooltips[1]).toHaveAttribute('title', 'Task');
         expect(tooltips[2]).toHaveAttribute('title', 'Job ID');
-        expect(tooltips[3]).toHaveAttribute('title', 'Assignee');
-        expect(tooltips[4]).toHaveAttribute('title', 'Stage');
+        expect(tooltips[3]).toHaveAttribute('title', 'View change history');
+        expect(tooltips[4]).toHaveAttribute('title', 'Assignee');
+        expect(tooltips[5]).toHaveAttribute('title', 'Stage');
     });
 
     it('should render 4 tooltips when project is absent', () => {
@@ -170,12 +177,13 @@ describe('JobBreadcrumb', () => {
 
         const tooltips = screen.getAllByTestId('cvat-tooltip');
 
-        // Without project, we expect 4 tooltips: Task, Job ID, Assignee, Stage
-        expect(tooltips.length).toBe(4);
+        // Without project, we expect 5 tooltips: Task, Job ID, History, Assignee, Stage
+        expect(tooltips.length).toBe(5);
         expect(tooltips[0]).toHaveAttribute('title', 'Task');
         expect(tooltips[1]).toHaveAttribute('title', 'Job ID');
-        expect(tooltips[2]).toHaveAttribute('title', 'Assignee');
-        expect(tooltips[3]).toHaveAttribute('title', 'Stage');
+        expect(tooltips[2]).toHaveAttribute('title', 'View change history');
+        expect(tooltips[3]).toHaveAttribute('title', 'Assignee');
+        expect(tooltips[4]).toHaveAttribute('title', 'Stage');
     });
 
     it('should display job ID', () => {

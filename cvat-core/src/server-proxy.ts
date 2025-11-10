@@ -1775,6 +1775,19 @@ function exportEvents(params: APIAnalyticsEventsFilter): Promise<string> {
     return promise;
 }
 
+async function getJobHistory(jobId: number): Promise<any[]> {
+    const { backendAPI } = config;
+
+    try {
+        const response = await Axios.get(`${backendAPI}/events/job-history`, {
+            params: { job_id: jobId },
+        });
+        return response.data;
+    } catch (errorData) {
+        throw generateError(errorData);
+    }
+}
+
 async function getLambdaFunctions() {
     const { backendAPI } = config;
 
@@ -2492,6 +2505,7 @@ export default Object.freeze({
     events: Object.freeze({
         save: saveEvents,
         export: exportEvents,
+        getJobHistory,
     }),
 
     lambda: Object.freeze({

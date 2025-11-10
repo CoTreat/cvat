@@ -6,7 +6,7 @@ import data.utils
 import data.organizations
 
 # input: {
-#     "scope": <"send:events","dump:events","download:exported_file"> or null,
+#     "scope": <"send:events","dump:events","view:job_history","download:exported_file"> or null,
 #     "auth": {
 #         "user": {
 #             "id": <num>,
@@ -45,6 +45,18 @@ allow if {
 
 allow if {
     input.scope == utils.DUMP_EVENTS
+    utils.has_perm(utils.WORKER)
+    organizations.has_perm(organizations.WORKER)
+}
+
+allow if {
+    input.scope == utils.VIEW_JOB_HISTORY
+    utils.is_sandbox
+    utils.has_perm(utils.WORKER)
+}
+
+allow if {
+    input.scope == utils.VIEW_JOB_HISTORY
     utils.has_perm(utils.WORKER)
     organizations.has_perm(organizations.WORKER)
 }

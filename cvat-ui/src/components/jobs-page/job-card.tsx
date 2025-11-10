@@ -3,13 +3,15 @@
 //
 // SPDX-License-Identifier: MIT
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useHistory } from 'react-router';
 import Card from 'antd/lib/card';
 import Descriptions from 'antd/lib/descriptions';
 import Text from 'antd/lib/typography/Text';
-import { BookOutlined, CarryOutOutlined, MoreOutlined } from '@ant-design/icons';
+import {
+    BookOutlined, CarryOutOutlined, MoreOutlined, HistoryOutlined,
+} from '@ant-design/icons';
 
 import { Job, JobType } from 'cvat-core-wrapper';
 import { useCardHeightHOC } from 'utils/hooks';
@@ -17,6 +19,7 @@ import Preview from 'components/common/preview';
 import { CombinedState } from 'reducers';
 import CVATTooltip from 'components/common/cvat-tooltip';
 import JobActionsComponent from './actions-menu';
+import JobHistoryModal from '../job-item/job-history-modal';
 
 const useCardHeight = useCardHeightHOC({
     containerClassName: 'cvat-jobs-page',
@@ -38,6 +41,7 @@ function JobCardComponent(props: Props): JSX.Element {
 
     const history = useHistory();
     const height = useCardHeight();
+    const [historyModalVisible, setHistoryModalVisible] = useState(false);
     const onClick = (event: React.MouseEvent): void => {
         const url = `/tasks/${job.taskId}/jobs/${job.id}`;
         if (event.ctrlKey) {
@@ -122,6 +126,17 @@ function JobCardComponent(props: Props): JSX.Element {
                 triggerElement={
                     <MoreOutlined className='cvat-job-card-more-button' />
                 }
+            />
+            <CVATTooltip title='View status change history'>
+                <HistoryOutlined
+                    onClick={() => setHistoryModalVisible(true)}
+                    className='cvat-job-card-history-button'
+                />
+            </CVATTooltip>
+            <JobHistoryModal
+                jobId={job.id}
+                visible={historyModalVisible}
+                onClose={() => setHistoryModalVisible(false)}
             />
         </Card>
     );
