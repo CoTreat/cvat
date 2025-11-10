@@ -2,6 +2,7 @@
 #
 # SPDX-License-Identifier: MIT
 
+import json
 import traceback
 from typing import Any, Optional, Union
 
@@ -351,13 +352,20 @@ def handle_update(scope, instance, old_instance, **kwargs):
 
     for prop, change in diff.items():
         change = _cleanup_fields(change)
+        new_value = change["new_value"]
+        # Convert to JSON string if it's a dict or list, otherwise use str()
+        if isinstance(new_value, (dict, list)):
+            obj_val = json.dumps(new_value)
+        else:
+            obj_val = str(new_value) if new_value is not None else None
+
         record_server_event(
             scope=scope,
             request_info=request_info(),
             on_commit=True,
             obj_name=prop,
             obj_id=getattr(instance, f"{prop}_id", None),
-            obj_val=str(change["new_value"]),
+            obj_val=obj_val,
             org_id=oid,
             org_slug=oslug,
             project_id=pid,
