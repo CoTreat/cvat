@@ -113,3 +113,14 @@ class ClientEventsSerializer(serializers.Serializer):
             )
 
         return data
+
+
+class JobHistorySerializer(serializers.Serializer):
+    """Serializer for job history events"""
+
+    timestamp = serializers.DateTimeField()
+    user_id = serializers.IntegerField(allow_null=True)
+    user_name = serializers.CharField(allow_null=True, allow_blank=True)
+    field_name = serializers.CharField()
+    old_value = serializers.CharField(allow_null=True, allow_blank=True)
+    new_value = serializers.CharField(allow_null=True, allow_blank=True)

@@ -565,6 +565,14 @@ export default function implementAPI(cvat: CVATCore): CVATCore {
         const params = fieldsToSnakeCase(filter);
         return serverProxy.events.export(params);
     });
+    implementationMixin(cvat.analytics.events.getJobHistory, async (
+        jobId: number,
+    ): ReturnType<CVATCore['analytics']['events']['getJobHistory']> => {
+        if (!Number.isInteger(jobId) || jobId <= 0) {
+            throw new Error('Job ID must be a positive integer');
+        }
+        return serverProxy.events.getJobHistory(jobId);
+    });
     implementationMixin(cvat.frames.getMeta, async (type: 'job' | 'task', id: number) => {
         const result = await getFramesMeta(type, id);
         return result;

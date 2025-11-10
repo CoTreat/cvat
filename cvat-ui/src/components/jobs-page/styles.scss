@@ -181,4 +181,16 @@
         right: $grid-unit-size;
         font-size: 16px;
     }
+
+    .cvat-job-card-history-button {
+        position: absolute;
+        bottom: $grid-unit-size * 2;
+        right: $grid-unit-size * 4;
+        font-size: 16px;
+        cursor: pointer;
+
+        &:hover {
+            color: $info-icon-color;
+        }
+    }
 }

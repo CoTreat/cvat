@@ -16,7 +16,7 @@ import Select from 'antd/lib/select';
 import Icon from '@ant-design/icons';
 import {
     BorderOutlined,
-    LoadingOutlined, MoreOutlined, QuestionCircleOutlined,
+    LoadingOutlined, MoreOutlined, QuestionCircleOutlined, HistoryOutlined,
 } from '@ant-design/icons/lib/icons';
 import { DurationIcon, FramesIcon } from 'icons';
 import {
@@ -29,6 +29,7 @@ import { CombinedState } from 'reducers';
 import Collapse from 'antd/lib/collapse';
 import CVATTag, { TagType } from 'components/common/cvat-tag';
 import JobActionsComponent from 'components/jobs-page/actions-menu';
+import JobHistoryModal from './job-history-modal';
 
 function formatDate(value: moment.Moment): string {
     return value.format('MMM Do YYYY HH:mm');
@@ -114,6 +115,8 @@ function JobItem(props: Props): JSX.Element {
     const deletes = useSelector((state: CombinedState) => state.jobs.activities.deletes);
     const deleted = job.id in deletes ? deletes[job.id] === true : false;
 
+    const [historyModalVisible, setHistoryModalVisible] = useState(false);
+
     const { stage } = job;
     const created = moment(job.createdDate);
     const updated = moment(job.updatedDate);
@@ -171,6 +174,15 @@ function JobItem(props: Props): JSX.Element {
                                     </CVATTooltip>
                                 </Col>
                             )}
+                            <Col>
+                                <CVATTooltip title='View change history'>
+                                    <HistoryOutlined
+                                        onClick={() => setHistoryModalVisible(true)}
+                                        className='cvat-job-item-history-button'
+                                    />
+                                </CVATTooltip>
+                            </Col>
+
                         </Row>
                         <Row className='cvat-job-item-dates-info'>
                             <Col>
@@ -293,12 +305,18 @@ function JobItem(props: Props): JSX.Element {
                         </Row>
                     </Col>
                 </Row>
+
                 <JobActionsComponent
                     jobInstance={job}
                     consensusJobsPresent={(childJobs as Job[]).length > 0}
                     triggerElement={
                         <MoreOutlined className='cvat-job-item-more-button' />
                     }
+                />
+                <JobHistoryModal
+                    jobId={job.id}
+                    visible={historyModalVisible}
+                    onClose={() => setHistoryModalVisible(false)}
                 />
                 {childJobViews.length > 0 && (
                     <Collapse
