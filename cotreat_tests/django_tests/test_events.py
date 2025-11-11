@@ -288,3 +288,334 @@ class EventsAPITestCase(BaseAPITestCase):
             [status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN]
         )
 
+    # Assignment Notifications Tests
+
+    @patch('cvat.apps.events.views.clickhouse_connect')
+    def test_assignment_notifications_endpoint_returns_empty_list_when_no_notifications(self, mock_clickhouse):
+        """
+        Test that assignment_notifications endpoint returns empty list when no notifications exist.
+        """
+        # Mock ClickHouse client
+        mock_client = MagicMock()
+        mock_result = MagicMock()
+        mock_result.result_rows = []
+        mock_client.query.return_value = mock_result
+        mock_clickhouse.get_client.return_value.__enter__.return_value = mock_client
+
+        url = "/api/events/assignment-notifications"
+        response = self.authenticated_client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIsInstance(response.data, list)
+        self.assertEqual(len(response.data), 0)
+
+    @patch('cvat.apps.events.views.clickhouse_connect')
+    def test_assignment_notifications_endpoint_returns_job_assignments(self, mock_clickhouse):
+        """
+        Test that assignment_notifications endpoint returns job assignment events.
+        """
+        from datetime import datetime
+
+        # Mock ClickHouse client with job assignment
+        mock_client = MagicMock()
+        mock_result = MagicMock()
+        mock_result.result_rows = [
+            (
+                datetime(2024, 1, 1, 12, 0, 0),  # timestamp
+                "update:job",  # scope
+                1,  # project_id
+                2,  # task_id
+                3,  # job_id
+                '{"id": 1, "username": "admin_test"}',  # assignee_value
+            )
+        ]
+        mock_client.query.return_value = mock_result
+        mock_clickhouse.get_client.return_value.__enter__.return_value = mock_client
+
+        url = "/api/events/assignment-notifications"
+        response = self.authenticated_client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0]["scope"], "update:job")
+        self.assertEqual(response.data[0]["job_id"], 3)
+        self.assertEqual(response.data[0]["task_id"], 2)
+        self.assertEqual(response.data[0]["project_id"], 1)
+        self.assertEqual(response.data[0]["assignee_username"], "admin_test")
+
+    @patch('cvat.apps.events.views.clickhouse_connect')
+    def test_assignment_notifications_endpoint_returns_task_assignments(self, mock_clickhouse):
+        """
+        Test that assignment_notifications endpoint returns task assignment events.
+        """
+        from datetime import datetime
+
+        # Mock ClickHouse client with task assignment
+        mock_client = MagicMock()
+        mock_result = MagicMock()
+        mock_result.result_rows = [
+            (
+                datetime(2024, 1, 1, 12, 0, 0),  # timestamp
+                "update:task",  # scope
+                1,  # project_id
+                2,  # task_id
+                None,  # job_id
+                "{'id': 1, 'username': 'admin_test'}",  # assignee_value (Python string format)
+            )
+        ]
+        mock_client.query.return_value = mock_result
+        mock_clickhouse.get_client.return_value.__enter__.return_value = mock_client
+
+        url = "/api/events/assignment-notifications"
+        response = self.authenticated_client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0]["scope"], "update:task")
+        self.assertEqual(response.data[0]["task_id"], 2)
+        self.assertEqual(response.data[0]["assignee_username"], "admin_test")
+
+    @patch('cvat.apps.events.views.clickhouse_connect')
+    def test_assignment_notifications_endpoint_returns_project_assignments(self, mock_clickhouse):
+        """
+        Test that assignment_notifications endpoint returns project assignment events.
+        """
+        from datetime import datetime
+
+        # Mock ClickHouse client with project assignment
+        mock_client = MagicMock()
+        mock_result = MagicMock()
+        mock_result.result_rows = [
+            (
+                datetime(2024, 1, 1, 12, 0, 0),  # timestamp
+                "update:project",  # scope
+                1,  # project_id
+                None,  # task_id
+                None,  # job_id
+                '{"id": 1, "username": "admin_test"}',  # assignee_value
+            )
+        ]
+        mock_client.query.return_value = mock_result
+        mock_clickhouse.get_client.return_value.__enter__.return_value = mock_client
+
+        url = "/api/events/assignment-notifications"
+        response = self.authenticated_client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0]["scope"], "update:project")
+        self.assertEqual(response.data[0]["project_id"], 1)
+        self.assertIsNone(response.data[0]["task_id"])
+        self.assertIsNone(response.data[0]["job_id"])
+
+    @patch('cvat.apps.events.views.clickhouse_connect')
+    def test_assignment_notifications_endpoint_respects_limit_parameter(self, mock_clickhouse):
+        """
+        Test that assignment_notifications endpoint respects the limit parameter.
+        """
+        from datetime import datetime
+
+        # Mock ClickHouse client with multiple assignments
+        mock_client = MagicMock()
+        mock_result = MagicMock()
+        mock_result.result_rows = [
+            (
+                datetime(2024, 1, 1, 12, 0, 0),
+                "update:job",
+                1, 2, 3,
+                '{"id": 1, "username": "admin_test"}',
+            ),
+            (
+                datetime(2024, 1, 1, 13, 0, 0),
+                "update:job",
+                1, 2, 4,
+                '{"id": 1, "username": "admin_test"}',
+            ),
+        ]
+        mock_client.query.return_value = mock_result
+        mock_clickhouse.get_client.return_value.__enter__.return_value = mock_client
+
+        url = "/api/events/assignment-notifications"
+        response = self.authenticated_client.get(url, {"limit": 5})
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # Verify that query was called with correct limit
+        mock_client.query.assert_called_once()
+        call_args = mock_client.query.call_args
+        self.assertEqual(call_args[1]["parameters"]["limit"], 5)
+
+    @patch('cvat.apps.events.views.clickhouse_connect')
+    def test_assignment_notifications_endpoint_limits_max_to_20(self, mock_clickhouse):
+        """
+        Test that assignment_notifications endpoint limits maximum results to 20.
+        """
+        mock_client = MagicMock()
+        mock_result = MagicMock()
+        mock_result.result_rows = []
+        mock_client.query.return_value = mock_result
+        mock_clickhouse.get_client.return_value.__enter__.return_value = mock_client
+
+        url = "/api/events/assignment-notifications"
+        response = self.authenticated_client.get(url, {"limit": 100})
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # Verify that limit was capped at 20
+        call_args = mock_client.query.call_args
+        self.assertEqual(call_args[1]["parameters"]["limit"], 20)
+
+    @patch('cvat.apps.events.views.clickhouse_connect')
+    def test_assignment_notifications_endpoint_handles_invalid_limit(self, mock_clickhouse):
+        """
+        Test that assignment_notifications endpoint handles invalid limit parameter.
+        """
+        mock_client = MagicMock()
+        mock_result = MagicMock()
+        mock_result.result_rows = []
+        mock_client.query.return_value = mock_result
+        mock_clickhouse.get_client.return_value.__enter__.return_value = mock_client
+
+        url = "/api/events/assignment-notifications"
+        response = self.authenticated_client.get(url, {"limit": "invalid"})
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # Verify default limit of 20 was used
+        call_args = mock_client.query.call_args
+        self.assertEqual(call_args[1]["parameters"]["limit"], 20)
+
+    @patch('cvat.apps.events.views.clickhouse_connect')
+    def test_assignment_notifications_endpoint_parses_python_dict_assignee(self, mock_clickhouse):
+        """
+        Test that assignment_notifications endpoint parses Python dict string assignee values.
+        """
+        from datetime import datetime
+
+        # Mock ClickHouse client with Python dict string
+        mock_client = MagicMock()
+        mock_result = MagicMock()
+        mock_result.result_rows = [
+            (
+                datetime(2024, 1, 1, 12, 0, 0),
+                "update:job",
+                1, 2, 3,
+                "{'id': 1, 'username': 'admin_test'}",  # Python string format
+            )
+        ]
+        mock_client.query.return_value = mock_result
+        mock_clickhouse.get_client.return_value.__enter__.return_value = mock_client
+
+        url = "/api/events/assignment-notifications"
+        response = self.authenticated_client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0]["assignee_username"], "admin_test")
+
+    @patch('cvat.apps.events.views.clickhouse_connect')
+    def test_assignment_notifications_endpoint_handles_missing_username(self, mock_clickhouse):
+        """
+        Test that assignment_notifications endpoint handles assignee without username.
+        """
+        from datetime import datetime
+
+        # Mock ClickHouse client with assignee missing username
+        mock_client = MagicMock()
+        mock_result = MagicMock()
+        mock_result.result_rows = [
+            (
+                datetime(2024, 1, 1, 12, 0, 0),
+                "update:job",
+                1, 2, 3,
+                '{"id": 1}',  # No username field
+            )
+        ]
+        mock_client.query.return_value = mock_result
+        mock_clickhouse.get_client.return_value.__enter__.return_value = mock_client
+
+        url = "/api/events/assignment-notifications"
+        response = self.authenticated_client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+        self.assertIsNone(response.data[0]["assignee_username"])
+
+    @patch('cvat.apps.events.views.clickhouse_connect')
+    def test_assignment_notifications_endpoint_returns_most_recent_per_resource(self, mock_clickhouse):
+        """
+        Test that assignment_notifications endpoint returns only most recent assignment per resource.
+        """
+        from datetime import datetime
+
+        # Mock ClickHouse client - should only return the most recent for each resource
+        mock_client = MagicMock()
+        mock_result = MagicMock()
+        mock_result.result_rows = [
+            (
+                datetime(2024, 1, 1, 14, 0, 0),  # Most recent
+                "update:job",
+                1, 2, 3,
+                '{"id": 1, "username": "admin_test"}',
+            ),
+            (
+                datetime(2024, 1, 1, 13, 0, 0),  # Most recent for different job
+                "update:job",
+                1, 2, 4,
+                '{"id": 1, "username": "admin_test"}',
+            ),
+        ]
+        mock_client.query.return_value = mock_result
+        mock_clickhouse.get_client.return_value.__enter__.return_value = mock_client
+
+        url = "/api/events/assignment-notifications"
+        response = self.authenticated_client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 2)
+        # Verify we have different job_ids
+        job_ids = {item["job_id"] for item in response.data}
+        self.assertEqual(job_ids, {3, 4})
+
+    @patch('cvat.apps.events.views.clickhouse_connect')
+    def test_assignment_notifications_endpoint_handles_clickhouse_error(self, mock_clickhouse):
+        """
+        Test that assignment_notifications endpoint handles ClickHouse errors gracefully.
+        """
+        # Mock ClickHouse client to raise an error
+        mock_clickhouse.get_client.side_effect = Exception("ClickHouse connection failed")
+
+        url = "/api/events/assignment-notifications"
+        response = self.authenticated_client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR)
+        self.assertIn("error", response.data)
+
+    def test_assignment_notifications_endpoint_requires_authentication(self):
+        """
+        Test that assignment_notifications endpoint requires authentication.
+        """
+        url = "/api/events/assignment-notifications"
+        response = self.client.get(url)
+
+        self.assertIn(
+            response.status_code,
+            [status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN]
+        )
+
+    @patch('cvat.apps.events.views.clickhouse_connect')
+    def test_assignment_notifications_endpoint_filters_by_current_user(self, mock_clickhouse):
+        """
+        Test that assignment_notifications endpoint filters by current user ID.
+        """
+        mock_client = MagicMock()
+        mock_result = MagicMock()
+        mock_result.result_rows = []
+        mock_client.query.return_value = mock_result
+        mock_clickhouse.get_client.return_value.__enter__.return_value = mock_client
+
+        url = "/api/events/assignment-notifications"
+        response = self.authenticated_client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # Verify that query was called with current user's ID
+        call_args = mock_client.query.call_args
+        self.assertEqual(call_args[1]["parameters"]["user_id"], self.admin_user.id)
+
