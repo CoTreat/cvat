@@ -26,7 +26,7 @@ interface AssignmentNotification {
 }
 
 const LAST_OPENED_KEY = 'assignment_notifications_last_opened';
-const POLL_INTERVAL = 2 * 60 * 1000; // 2 minutes in milliseconds
+const POLL_INTERVAL = 1 * 60 * 1000; // 1 minute in milliseconds
 
 function AssignmentNotifications(): JSX.Element {
     const core = getCore();
@@ -71,12 +71,12 @@ function AssignmentNotifications(): JSX.Element {
             });
             setBadgeCount(newNotifications.length);
 
-            // Show auto-notification for very recent items (within last 2 minutes)
+            // Show auto-notification for very recent items (within last polling interval)
             if (showAutoNotification) {
-                const twoMinutesAgo = Date.now() - POLL_INTERVAL;
+                const recentThreshold = Date.now() - POLL_INTERVAL;
                 const veryRecentNotifications = data.filter((notif: AssignmentNotification) => {
                     const notifTimestamp = new Date(notif.timestamp).getTime();
-                    return notifTimestamp > twoMinutesAgo;
+                    return notifTimestamp > recentThreshold;
                 });
 
                 veryRecentNotifications.forEach((notif: AssignmentNotification) => {
@@ -102,7 +102,7 @@ function AssignmentNotifications(): JSX.Element {
                             </div>
                         ),
                         placement: 'topRight',
-                        duration: 10,
+                        duration: 30,
                         onClick: () => {
                             handleNotificationClick(notif);
                         },
@@ -173,8 +173,8 @@ function AssignmentNotifications(): JSX.Element {
             <div className='cvat-assignment-notifications-list'>
                 {notifications.map((notif: AssignmentNotification, index: number) => {
                     const notifTimestamp = new Date(notif.timestamp).getTime();
-                    const twoMinutesAgo = Date.now() - POLL_INTERVAL;
-                    const isNew = notifTimestamp > twoMinutesAgo;
+                    const lastOpened = getLastOpenedTimestamp();
+                    const isNew = notifTimestamp > lastOpened;
 
                     return (
                         <div

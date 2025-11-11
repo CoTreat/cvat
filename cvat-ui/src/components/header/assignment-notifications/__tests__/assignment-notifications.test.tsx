@@ -113,21 +113,21 @@ describe('Notification Message Generation Logic', () => {
 });
 
 describe('Timestamp Comparison Logic', () => {
-    it('should identify recent notifications (within 2 minutes)', () => {
+    it('should identify recent notifications (within 1 minute for auto-notifications)', () => {
         const now = Date.now();
-        const oneMinuteAgo = now - 1 * 60 * 1000;
-        const twoMinutesInterval = 2 * 60 * 1000;
+        const thirtySecondsAgo = now - 30 * 1000;
+        const oneMinuteInterval = 1 * 60 * 1000;
 
-        const isRecent = oneMinuteAgo > (now - twoMinutesInterval);
+        const isRecent = thirtySecondsAgo > (now - oneMinuteInterval);
         expect(isRecent).toBe(true);
     });
 
-    it('should identify old notifications (more than 2 minutes)', () => {
+    it('should identify old notifications (more than 1 minute for auto-notifications)', () => {
         const now = Date.now();
-        const threeMinutesAgo = now - 3 * 60 * 1000;
-        const twoMinutesInterval = 2 * 60 * 1000;
+        const twoMinutesAgo = now - 2 * 60 * 1000;
+        const oneMinuteInterval = 1 * 60 * 1000;
 
-        const isRecent = threeMinutesAgo > (now - twoMinutesInterval);
+        const isRecent = twoMinutesAgo > (now - oneMinuteInterval);
         expect(isRecent).toBe(false);
     });
 
