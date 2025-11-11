@@ -16,9 +16,15 @@ from rest_framework.response import Response
 
 from cvat.apps.engine.location import Location
 from cvat.apps.engine.log import vlogger
+
+# from cvat.apps.engine.models import Job, Project, Task
 from cvat.apps.engine.types import ExtendedRequest
 from cvat.apps.events.export import EventsExporter
-from cvat.apps.events.serializers import ClientEventsSerializer, JobHistorySerializer
+from cvat.apps.events.serializers import (
+    AssignmentNotificationSerializer,
+    ClientEventsSerializer,
+    JobHistorySerializer,
+)
 from cvat.apps.iam.filters import ORGANIZATION_OPEN_API_PARAMETERS
 from cvat.apps.iam.permissions import PolicyEnforcer
 from cvat.apps.redis_handler.serializers import RqIdSerializer
@@ -26,6 +32,39 @@ from cvat.apps.redis_handler.serializers import RqIdSerializer
 from .const import USER_ACTIVITY_SCOPE
 from .export import export
 from .handlers import handle_client_events_push
+
+
+def parse_stringified_value(value: str, field_name: str) -> str:
+    """
+    Parse a stringified value that might be a Python dict representation
+    (with single quotes) or valid JSON (with double quotes).
+    For assignee field, converts to valid JSON if it's a Python dict string.
+    """
+    if not value or field_name != "assignee":
+        return value
+
+    # Try to parse as JSON first (valid JSON format)
+    try:
+        parsed = json.loads(value)
+        # If it's a dict/list, convert back to JSON string to ensure consistency
+        if isinstance(parsed, (dict, list)):
+            return json.dumps(parsed)
+        return value
+    except (json.JSONDecodeError, TypeError):
+        pass
+
+    # Try to parse as Python literal (handles single quotes)
+    try:
+        parsed = ast.literal_eval(value)
+        # Convert to valid JSON string
+        if isinstance(parsed, (dict, list)):
+            return json.dumps(parsed)
+    except (ValueError, SyntaxError):
+        pass
+
+    # If parsing fails, return original value
+    return value
+
 
 api_filter_parameters = (
     OpenApiParameter(
@@ -236,37 +275,6 @@ class EventsViewSet(viewsets.ViewSet):
             "200": JobHistorySerializer(many=True),
         },
     )
-    def _parse_stringified_value(self, value: str, field_name: str) -> str:
-        """
-        Parse a stringified value that might be a Python dict representation
-        (with single quotes) or valid JSON (with double quotes).
-        For assignee field, converts to valid JSON if it's a Python dict string.
-        """
-        if not value or field_name != "assignee":
-            return value
-
-        # Try to parse as JSON first (valid JSON format)
-        try:
-            parsed = json.loads(value)
-            # If it's a dict/list, convert back to JSON string to ensure consistency
-            if isinstance(parsed, (dict, list)):
-                return json.dumps(parsed)
-            return value
-        except (json.JSONDecodeError, TypeError):
-            pass
-
-        # Try to parse as Python literal (handles single quotes)
-        try:
-            parsed = ast.literal_eval(value)
-            # Convert to valid JSON string
-            if isinstance(parsed, (dict, list)):
-                return json.dumps(parsed)
-        except (ValueError, SyntaxError):
-            pass
-
-        # If parsing fails, return original value
-        return value
-
     @action(detail=False, methods=["GET"], url_path="job-history")
     def job_history(self, request: ExtendedRequest):
         self.check_permissions(request)
@@ -317,11 +325,11 @@ class EventsViewSet(viewsets.ViewSet):
 
                 # Parse new_value if it's an assignee field with stringified dict
                 if new_value and isinstance(new_value, str):
-                    new_value = self._parse_stringified_value(new_value, field_name)
+                    new_value = parse_stringified_value(new_value, field_name)
 
                 # Parse old_value if it's an assignee field with stringified dict
                 if old_value and isinstance(old_value, str):
-                    old_value = self._parse_stringified_value(old_value, field_name)
+                    old_value = parse_stringified_value(old_value, field_name)
 
                 history_data.append(
                     {
@@ -341,5 +349,161 @@ class EventsViewSet(viewsets.ViewSet):
         except Exception as e:
             return Response(
                 {"error": f"Failed to fetch job history: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+    @extend_schema(
+        summary="Get assignment notifications for current user",
+        methods=["GET"],
+        description="Returns recent assignment events for the current user (max 20)",
+        parameters=[
+            OpenApiParameter(
+                "limit",
+                location=OpenApiParameter.QUERY,
+                type=OpenApiTypes.INT,
+                required=False,
+                description="Maximum number of notifications to return (default: 20)",
+            ),
+        ],
+        responses={
+            "200": AssignmentNotificationSerializer(many=True),
+        },
+    )
+    @action(detail=False, methods=["GET"], url_path="assignment-notifications")
+    def assignment_notifications(self, request: ExtendedRequest):
+        self.check_permissions(request)
+
+        limit = request.query_params.get("limit", 20)
+        try:
+            limit = int(limit)
+            if limit > 20:
+                limit = 20
+        except ValueError:
+            limit = 20
+
+        try:
+            clickhouse_settings = settings.CLICKHOUSE["events"]
+            current_user_id = request.user.id
+
+            # Query for assignment events across jobs, tasks, and projects
+            # We look for 'update:job', 'update:task', and 'update:project' events
+            # where obj_name = 'assignee' and the new value contains the current user's ID
+            # We use subquery to get only the most recent assignment for each distinct resource
+            # Filter by current user ID using string matching since obj_val is a stringified Python dict
+            query = """
+                WITH ranked_events AS (
+                    SELECT
+                        timestamp,
+                        scope,
+                        project_id,
+                        task_id,
+                        job_id,
+                        obj_val as assignee_value,
+                        ROW_NUMBER() OVER (
+                            PARTITION BY
+                                scope,
+                                CASE
+                                    WHEN scope = 'update:job' THEN job_id
+                                    WHEN scope = 'update:task' THEN task_id
+                                    WHEN scope = 'update:project' THEN project_id
+                                END
+                            ORDER BY timestamp DESC
+                        ) as rn
+                    FROM events
+                    WHERE scope IN ('update:job', 'update:task', 'update:project')
+                      AND obj_name = 'assignee'
+                      AND source = 'server'
+                      AND (
+                          obj_val LIKE concat('%', '''id''', ': ', toString({user_id:UInt64}), '%')
+                          OR obj_val LIKE concat('%', '"id"', ': ', toString({user_id:UInt64}), '%')
+                      )
+                )
+                SELECT
+                    timestamp,
+                    scope,
+                    project_id,
+                    task_id,
+                    job_id,
+                    assignee_value
+                FROM ranked_events
+                WHERE rn = 1
+                ORDER BY timestamp DESC
+                LIMIT {limit:UInt32}
+            """
+
+            with clickhouse_connect.get_client(
+                host=clickhouse_settings["HOST"],
+                database=clickhouse_settings["NAME"],
+                port=clickhouse_settings["PORT"],
+                username=clickhouse_settings["USER"],
+                password=clickhouse_settings["PASSWORD"],
+            ) as client:
+                result = client.query(
+                    query, parameters={"limit": limit, "user_id": current_user_id}
+                )
+
+            # Convert to list of dicts
+            # Results are already filtered for current user by the SQL query
+            notifications_data = []
+            for row in result.result_rows:
+                timestamp = row[0]
+                scope = row[1]
+                project_id = row[2]
+                task_id = row[3]
+                job_id = row[4]
+                assignee_value = row[5]
+
+                # Parse assignee value to extract username
+                assignee_id = current_user_id
+                assignee_username = None
+
+                if assignee_value:
+                    # Parse the stringified assignee value
+                    parsed_value = parse_stringified_value(assignee_value, "assignee")
+                    try:
+                        assignee_data = json.loads(parsed_value)
+                        if isinstance(assignee_data, dict):
+                            assignee_username = assignee_data.get("username")
+                    except (json.JSONDecodeError, TypeError):
+                        pass
+
+                notifications_data.append(
+                    {
+                        "timestamp": timestamp,
+                        "scope": scope,
+                        "assignee_id": assignee_id,
+                        "assignee_username": assignee_username,
+                        "project_id": project_id,
+                        "task_id": task_id,
+                        "job_id": job_id,
+                    }
+                )
+
+            # Verify that jobs/tasks/projects still exist (bulk validation)
+            # Note: Uncomment this if you want to verify that the jobs/tasks/projects still exist
+            # if notifications_data:
+            #     job_ids = [n['job_id'] for n in notifications_data if n.get('job_id')]
+            #     task_ids = [n['task_id'] for n in notifications_data if n.get('task_id')]
+            #     project_ids = [n['project_id'] for n in notifications_data if n.get('project_id')]
+
+            #     existing_jobs = set(Job.objects.filter(id__in=job_ids).values_list('id', flat=True)) if job_ids else set()
+            #     existing_tasks = set(Task.objects.filter(id__in=task_ids).values_list('id', flat=True)) if task_ids else set()
+            #     existing_projects = set(Project.objects.filter(id__in=project_ids).values_list('id', flat=True)) if project_ids else set()
+
+            #     # Filter out notifications for deleted resources
+            #     notifications_data = [
+            #         n for n in notifications_data
+            #         if (n.get('job_id') and n['job_id'] in existing_jobs) or
+            #            (n.get('task_id') and n['task_id'] in existing_tasks) or
+            #            (n.get('project_id') and n['project_id'] in existing_projects)
+            #     ]
+
+            serializer = AssignmentNotificationSerializer(data=notifications_data, many=True)
+            serializer.is_valid(raise_exception=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            return Response(
+                {"error": f"Failed to fetch assignment notifications: {str(e)}"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )

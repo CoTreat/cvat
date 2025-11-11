@@ -1788,6 +1788,19 @@ async function getJobHistory(jobId: number): Promise<any[]> {
     }
 }
 
+async function getAssignmentNotifications(limit = 20): Promise<any[]> {
+    const { backendAPI } = config;
+
+    try {
+        const response = await Axios.get(`${backendAPI}/events/assignment-notifications`, {
+            params: { limit },
+        });
+        return response.data;
+    } catch (errorData) {
+        throw generateError(errorData);
+    }
+}
+
 async function getLambdaFunctions() {
     const { backendAPI } = config;
 
@@ -2506,6 +2519,7 @@ export default Object.freeze({
         save: saveEvents,
         export: exportEvents,
         getJobHistory,
+        getAssignmentNotifications,
     }),
 
     lambda: Object.freeze({

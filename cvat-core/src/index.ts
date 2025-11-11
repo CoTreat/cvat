@@ -161,6 +161,7 @@ export default interface CVATCore {
         events: {
             export: (filter: AnalyticsEventsFilter) => Promise<string>;
             getJobHistory: (jobId: number) => Promise<any[]>;
+            getAssignmentNotifications: (limit?: number) => Promise<any[]>;
         };
     };
     frames: {

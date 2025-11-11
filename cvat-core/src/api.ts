@@ -399,6 +399,13 @@ function build(): CVATCore {
                     const result = await PluginRegistry.apiWrapper(cvat.analytics.events.getJobHistory, jobId);
                     return result;
                 },
+                async getAssignmentNotifications(limit = 20) {
+                    const result = await PluginRegistry.apiWrapper(
+                        cvat.analytics.events.getAssignmentNotifications,
+                        limit,
+                    );
+                    return result;
+                },
             },
             quality: {
                 async reports(filter = {}, aggregate = false) {

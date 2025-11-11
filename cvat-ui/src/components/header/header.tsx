@@ -47,6 +47,7 @@ import { ShortcutScope } from 'utils/enums';
 import { subKeyMap } from 'utils/component-subkeymap';
 import SettingsModal from './settings-modal/settings-modal';
 import OrganizationsSearch from './organizations-search';
+import AssignmentNotifications from './assignment-notifications/assignment-notifications';
 
 interface StateToProps {
     user: any;
@@ -550,6 +551,7 @@ function HeaderComponent(props: Props): JSX.Element {
                         }}
                     />
                 </CVATTooltip>
+                <AssignmentNotifications />
                 <Dropdown
                     trigger={['click']}
                     destroyPopupOnHide
