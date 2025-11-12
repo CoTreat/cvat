@@ -158,7 +158,7 @@ class OpenPolicyAgentPermission(metaclass=ABCMeta):
 
         self.payload = {
             "input": {
-                "scope": self.scope,
+                "scope": str(self.scope),  # Convert enum to string for OPA
                 "auth": {
                     "user": {
                         "id": self.user_id,

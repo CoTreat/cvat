@@ -573,6 +573,9 @@ export default function implementAPI(cvat: CVATCore): CVATCore {
         }
         return serverProxy.events.getJobHistory(jobId);
     });
+    implementationMixin(cvat.analytics.events.getAssignmentNotifications, async (
+        limit = 20,
+    ): ReturnType<CVATCore['analytics']['events']['getAssignmentNotifications']> => serverProxy.events.getAssignmentNotifications(limit));
     implementationMixin(cvat.frames.getMeta, async (type: 'job' | 'task', id: number) => {
         const result = await getFramesMeta(type, id);
         return result;

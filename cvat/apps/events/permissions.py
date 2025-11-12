@@ -19,6 +19,7 @@ class EventsPermission(OpenPolicyAgentPermission, DownloadExportedExtension):
         SEND_EVENTS = "send:events"
         DUMP_EVENTS = "dump:events"
         VIEW_JOB_HISTORY = "view:job_history"
+        VIEW_ASSIGNMENT_NOTIFICATIONS = "view:assignment_notifications"
 
     @classmethod
     def create(
@@ -66,6 +67,7 @@ class EventsPermission(OpenPolicyAgentPermission, DownloadExportedExtension):
                 ("initiate_export", "POST"): Scopes.DUMP_EVENTS,
                 ("download_file", "GET"): DownloadExportedExtension.Scopes.DOWNLOAD_EXPORTED_FILE,
                 ("job_history", "GET"): Scopes.VIEW_JOB_HISTORY,
+                ("assignment_notifications", "GET"): Scopes.VIEW_ASSIGNMENT_NOTIFICATIONS,
                 # deprecated permissions:
                 ("list", "GET"): Scopes.DUMP_EVENTS,
             }[(view.action, request.method)]

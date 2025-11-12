@@ -124,3 +124,15 @@ class JobHistorySerializer(serializers.Serializer):
     field_name = serializers.CharField()
     old_value = serializers.CharField(allow_null=True, allow_blank=True)
     new_value = serializers.CharField(allow_null=True, allow_blank=True)
+
+
+class AssignmentNotificationSerializer(serializers.Serializer):
+    """Serializer for assignment notifications"""
+
+    timestamp = serializers.DateTimeField()
+    scope = serializers.CharField()
+    assignee_id = serializers.IntegerField()
+    assignee_username = serializers.CharField(allow_null=True, allow_blank=True)
+    project_id = serializers.IntegerField(allow_null=True)
+    task_id = serializers.IntegerField(allow_null=True)
+    job_id = serializers.IntegerField(allow_null=True)
