@@ -78,10 +78,7 @@ services:
       - cvat_cache_db:/var/lib/kvrocks
     networks:
       - cvat
-    command: [
-      "--compact-cron", "0 3 * * *",
-      "--max-db-size", "100GB", # 100GB allows caching ~500-1000 chunks since we change cache TTL to 7 days
-      ]
+    command: [ "--compact-cron", "0 3 * * *" ]
 
   cvat_server:
     container_name: cvat_server
