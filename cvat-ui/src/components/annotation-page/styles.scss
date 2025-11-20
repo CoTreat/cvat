@@ -356,7 +356,7 @@
 .cvat-canvas-image-setups-trigger {
     position: absolute;
     background: $background-color-2;
-    bottom: 0;
+    bottom: 20px;
     left: 50%;
     opacity: 0.5;
     border-radius: $border-radius-base $border-radius-base 0 0;
@@ -427,7 +427,7 @@
 .cvat-canvas-z-axis-wrapper {
     position: absolute;
     background: $background-color-2;
-    bottom: 10px;
+    bottom: 30px;
     right: 10px;
     height: 150px;
     z-index: 100;
