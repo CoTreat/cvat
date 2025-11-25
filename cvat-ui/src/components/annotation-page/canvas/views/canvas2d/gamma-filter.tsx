@@ -16,7 +16,11 @@ import {
 import GammaCorrection from 'utils/fabric-wrapper/gamma-correciton';
 import { ImageFilterAlias, hasFilter } from 'utils/image-processing';
 
-export default function GammaFilter(): JSX.Element {
+interface Props {
+    disabled?: boolean;
+}
+
+export default function GammaFilter({ disabled }: Props): JSX.Element {
     const dispatch = useDispatch();
     const [gamma, setGamma] = useState<number>(1);
     const filters = useSelector((state: CombinedState) => state.settings.imageFilters);
@@ -63,6 +67,7 @@ export default function GammaFilter(): JSX.Element {
                                 max={2.6}
                                 value={gamma}
                                 step={0.01}
+                                disabled={disabled}
                                 onChange={onChangeGamma}
                             />
                         </Col>

@@ -59,6 +59,7 @@ export enum SettingsActionTypes {
     DISABLE_IMAGE_FILTER = 'DISABLE_IMAGE_FILTER',
     RESET_IMAGE_FILTERS = 'RESET_IMAGE_FILTERS',
     CHANGE_SHAPES_ORIENTATION_VISIBILITY = 'CHANGE_SHAPES_ORIENTATION_VISIBILITY',
+    SWITCH_IMAGE_FILTERS_ENABLED = 'SWITCH_IMAGE_FILTERS_ENABLED',
 }
 
 export function changeShapesOpacity(opacity: number): AnyAction {
@@ -434,6 +435,15 @@ export function resetImageFilters(): AnyAction {
     return {
         type: SettingsActionTypes.RESET_IMAGE_FILTERS,
         payload: {},
+    };
+}
+
+export function switchImageFiltersEnabled(enabled: boolean): AnyAction {
+    return {
+        type: SettingsActionTypes.SWITCH_IMAGE_FILTERS_ENABLED,
+        payload: {
+            enabled,
+        },
     };
 }
 

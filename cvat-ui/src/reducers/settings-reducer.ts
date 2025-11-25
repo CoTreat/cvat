@@ -63,6 +63,7 @@ const defaultState: SettingsState = {
         brightnessLevel: 100,
         contrastLevel: 100,
         saturationLevel: 100,
+        imageFiltersEnabled: true,
     },
     imageFilters: [],
     showDialog: false,
@@ -461,6 +462,15 @@ export default (state = defaultState, action: AnyAction): SettingsState => {
             return {
                 ...state,
                 imageFilters: [],
+            };
+        }
+        case SettingsActionTypes.SWITCH_IMAGE_FILTERS_ENABLED: {
+            return {
+                ...state,
+                player: {
+                    ...state.player,
+                    imageFiltersEnabled: action.payload.enabled,
+                },
             };
         }
         case AnnotationActionTypes.GET_JOB_SUCCESS: {

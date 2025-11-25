@@ -7,6 +7,7 @@ import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Row, Col } from 'antd/lib/grid';
 import Checkbox, { CheckboxChangeEvent } from 'antd/lib/checkbox';
+import Tag from 'antd/lib/tag';
 import Text from 'antd/lib/typography/Text';
 import InputNumber from 'antd/lib/input-number';
 import Select from 'antd/lib/select';
@@ -22,6 +23,7 @@ import {
     changeSaturationLevel,
     changeGridSize,
     resetImageFilters,
+    switchImageFiltersEnabled,
 } from 'actions/settings-actions';
 import { clamp } from 'utils/math';
 import { GridColor, CombinedState, PlayerSettingsState } from 'reducers';
@@ -40,6 +42,7 @@ export default function ImageSetupsContent(): JSX.Element {
         gridColor,
         gridSize,
         grid: gridEnabled,
+        imageFiltersEnabled,
     } = useSelector((state: CombinedState): PlayerSettingsState => state.settings.player);
 
     return (
@@ -122,7 +125,23 @@ export default function ImageSetupsContent(): JSX.Element {
                     />
                 </Col>
             </Row>
-            <Text>Color settings</Text>
+            <Row justify='space-between' align='middle' className='cvat-image-setups-filters-enable'>
+                <Col>
+                    <Text>Color settings</Text>
+                </Col>
+                <Col>
+                    <Checkbox
+                        className='cvat-image-setups-filters-enable-checkbox'
+                        checked={imageFiltersEnabled}
+                        onChange={(event: CheckboxChangeEvent): void => {
+                            dispatch(switchImageFiltersEnabled(event.target.checked));
+                        }}
+                    >
+                        <Text className='cvat-text-color'>Enabled</Text>
+                    </Checkbox>
+                    <Tag className='cvat-image-setups-shortcut-tag'>I</Tag>
+                </Col>
+            </Row>
             <hr />
             <Row justify='space-around'>
                 <Col span={24}>
@@ -135,6 +154,7 @@ export default function ImageSetupsContent(): JSX.Element {
                                 min={50}
                                 max={200}
                                 value={brightnessLevel}
+                                disabled={!imageFiltersEnabled}
                                 onChange={(value: number | [number, number]): void => {
                                     dispatch(changeBrightnessLevel(value as number));
                                 }}
@@ -150,6 +170,7 @@ export default function ImageSetupsContent(): JSX.Element {
                                 min={50}
                                 max={200}
                                 value={contrastLevel}
+                                disabled={!imageFiltersEnabled}
                                 onChange={(value: number | [number, number]): void => {
                                     dispatch(changeContrastLevel(value as number));
                                 }}
@@ -165,6 +186,7 @@ export default function ImageSetupsContent(): JSX.Element {
                                 min={0}
                                 max={300}
                                 value={saturationLevel}
+                                disabled={!imageFiltersEnabled}
                                 onChange={(value: number | [number, number]): void => {
                                     dispatch(changeSaturationLevel(value as number));
                                 }}
@@ -173,7 +195,7 @@ export default function ImageSetupsContent(): JSX.Element {
                     </Row>
                 </Col>
             </Row>
-            <GammaFilter />
+            <GammaFilter disabled={!imageFiltersEnabled} />
             <Row className='cvat-image-setups-reset-color-settings' justify='space-around'>
                 <Col>
                     <Button
