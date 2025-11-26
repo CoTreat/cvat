@@ -896,6 +896,7 @@ export interface PlayerSettingsState {
     brightnessLevel: number;
     contrastLevel: number;
     saturationLevel: number;
+    imageFiltersEnabled: boolean;
 }
 
 export interface WorkspaceSettingsState {

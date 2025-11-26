@@ -55,6 +55,7 @@ import {
     changeContrastLevel,
     changeSaturationLevel,
     switchAutomaticBordering,
+    switchImageFiltersEnabled,
 } from 'actions/settings-actions';
 import { reviewActions } from 'actions/review-actions';
 
@@ -119,6 +120,7 @@ interface StateToProps {
     showGroundTruth: boolean;
     highlightedConflict: QualityConflict | null;
     imageFilters: ImageFilter[];
+    imageFiltersEnabled: boolean;
     activeControl: ActiveControl;
     activeObjectHidden: boolean;
 }
@@ -149,6 +151,7 @@ interface DispatchToProps {
     onCanvasErrorOccurred(error: Error): void;
     onStartIssue(position: number[]): void;
     onUpdateEditedObject(editedState: ObjectState | null): void;
+    onSwitchImageFiltersEnabled(enabled: boolean): void;
 }
 
 function mapStateToProps(state: CombinedState): StateToProps {
@@ -184,6 +187,7 @@ function mapStateToProps(state: CombinedState): StateToProps {
                 saturationLevel,
                 resetZoom,
                 smoothImage,
+                imageFiltersEnabled,
             },
             workspace: {
                 aamZoomMargin,
@@ -262,6 +266,7 @@ function mapStateToProps(state: CombinedState): StateToProps {
         showGroundTruth,
         highlightedConflict,
         imageFilters,
+        imageFiltersEnabled,
         activeObjectHidden,
     };
 }
@@ -271,6 +276,12 @@ const componentShortcuts = {
         name: 'Switch automatic bordering',
         description: 'Switch automatic bordering for polygons and polylines during drawing/editing',
         sequences: ['ctrl+a'],
+        scope: ShortcutScope.STANDARD_WORKSPACE,
+    },
+    TOGGLE_IMAGE_FILTERS: {
+        name: 'Toggle image color settings',
+        description: 'Enable/disable image color settings (brightness, contrast, saturation, gamma)',
+        sequences: ['i'],
         scope: ShortcutScope.STANDARD_WORKSPACE,
     },
 };
@@ -357,6 +368,9 @@ function mapDispatchToProps(dispatch: any): DispatchToProps {
         },
         onUpdateEditedObject(editedState: ObjectState | null): void {
             dispatch(updateEditedStateAsync(editedState));
+        },
+        onSwitchImageFiltersEnabled(enabled: boolean): void {
+            dispatch(switchImageFiltersEnabled(enabled));
         },
     };
 }
@@ -457,6 +471,7 @@ class CanvasWrapperComponent extends React.PureComponent<Props> {
             showGroundTruth,
             highlightedConflict,
             imageFilters,
+            imageFiltersEnabled,
         } = this.props;
         const { canvasInstance } = this.props as { canvasInstance: Canvas };
 
@@ -545,15 +560,22 @@ class CanvasWrapperComponent extends React.PureComponent<Props> {
         if (
             brightnessLevel !== prevProps.brightnessLevel ||
             contrastLevel !== prevProps.contrastLevel ||
-            saturationLevel !== prevProps.saturationLevel
+            saturationLevel !== prevProps.saturationLevel ||
+            imageFiltersEnabled !== prevProps.imageFiltersEnabled
         ) {
-            canvasInstance.configure({
-                CSSImageFilter:
-                    `brightness(${brightnessLevel}) contrast(${contrastLevel}) saturate(${saturationLevel})`,
-            });
+            if (imageFiltersEnabled) {
+                canvasInstance.configure({
+                    CSSImageFilter:
+                        `brightness(${brightnessLevel}) contrast(${contrastLevel}) saturate(${saturationLevel})`,
+                });
+            } else {
+                canvasInstance.configure({
+                    CSSImageFilter: 'none',
+                });
+            }
         }
 
-        if (prevProps.imageFilters !== imageFilters) {
+        if (prevProps.imageFilters !== imageFilters || imageFiltersEnabled !== prevProps.imageFiltersEnabled) {
             canvasInstance.configure({ forceFrameUpdate: true });
         }
 
@@ -963,7 +985,7 @@ class CanvasWrapperComponent extends React.PureComponent<Props> {
     private updateCanvas(): void {
         const {
             curZLayer, annotations, frameData,
-            workspace, frame, imageFilters,
+            workspace, frame, imageFilters, imageFiltersEnabled,
         } = this.props;
 
         const { canvasInstance } = this.props as { canvasInstance: Canvas };
@@ -978,9 +1000,11 @@ class CanvasWrapperComponent extends React.PureComponent<Props> {
                     if (prop === 'data') {
                         return async (...args: any[]) => {
                             const originalImage = await _frameData.data(...args);
-                            const imageIsNotProcessed = imageFilters.some((imageFilter: ImageFilter) => (
-                                imageFilter.modifier.currentProcessedImage !== frame
-                            ));
+                            const imageIsNotProcessed = imageFiltersEnabled && imageFilters.some(
+                                (imageFilter: ImageFilter) => (
+                                    imageFilter.modifier.currentProcessedImage !== frame
+                                ),
+                            );
 
                             if (imageIsNotProcessed) {
                                 try {
@@ -1033,6 +1057,7 @@ class CanvasWrapperComponent extends React.PureComponent<Props> {
             brightnessLevel,
             contrastLevel,
             saturationLevel,
+            imageFiltersEnabled,
         } = this.props;
         const { canvasInstance } = this.props as { canvasInstance: Canvas };
 
@@ -1049,8 +1074,9 @@ class CanvasWrapperComponent extends React.PureComponent<Props> {
         canvasInstance.grid(gridSize, gridSize);
 
         canvasInstance.configure({
-            CSSImageFilter:
-                `brightness(${brightnessLevel}) contrast(${contrastLevel}) saturate(${saturationLevel})`,
+            CSSImageFilter: imageFiltersEnabled ?
+                `brightness(${brightnessLevel}) contrast(${contrastLevel}) saturate(${saturationLevel})` :
+                'none',
         });
 
         canvasInstance.fitCanvas();
@@ -1105,9 +1131,11 @@ class CanvasWrapperComponent extends React.PureComponent<Props> {
             automaticBordering,
             showTagsOnFrame,
             canvasIsReady,
+            imageFiltersEnabled,
             onSwitchAutomaticBordering,
             onSwitchZLayer,
             onAddZLayer,
+            onSwitchImageFiltersEnabled,
         } = this.props;
 
         const preventDefault = (event: KeyboardEvent | undefined): void => {
@@ -1122,6 +1150,10 @@ class CanvasWrapperComponent extends React.PureComponent<Props> {
                     preventDefault(event);
                     onSwitchAutomaticBordering(!automaticBordering);
                 }
+            },
+            TOGGLE_IMAGE_FILTERS: (event: KeyboardEvent | undefined) => {
+                preventDefault(event);
+                onSwitchImageFiltersEnabled(!imageFiltersEnabled);
             },
         };
 

@@ -8,6 +8,16 @@
     margin-bottom: $grid-unit-size * 3;
 }
 
+.cvat-image-setups-shortcut-tag {
+    margin-left: $grid-unit-size;
+    font-family: $monospaced-fonts-stack;
+    font-size: 11px;
+    font-weight: 500;
+    padding: 0 $grid-unit-size;
+    line-height: 18px;
+    border-radius: $border-radius-base;
+}
+
 .cvat-canvas-hints-container {
     filter: none;
     position: absolute;
