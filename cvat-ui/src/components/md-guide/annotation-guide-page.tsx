@@ -7,7 +7,7 @@ import './styles.scss';
 import React, {
     useState, useEffect, useRef, useCallback,
 } from 'react';
-import { useLocation, useParams } from 'react-router';
+import { useLocation, useParams, useHistory } from 'react-router';
 import { Row, Col } from 'antd/lib/grid';
 import notification from 'antd/lib/notification';
 import Button from 'antd/lib/button';
@@ -24,6 +24,7 @@ const core = getCore();
 function AnnotationGuidePage(): JSX.Element {
     const mdEditorRef = useRef<typeof MDEditor & { commandOrchestrator: commands.TextAreaCommandOrchestrator }>(null);
     const location = useLocation();
+    const history = useHistory();
     const [value, setValue] = useState('');
     const instanceType = location.pathname.includes('projects') ? 'project' : 'task';
     const id = +useParams<{ id: string }>().id;
@@ -56,13 +57,19 @@ function AnnotationGuidePage(): JSX.Element {
             });
     }, []);
 
-    const submit = useCallback((updatedValue: string) => {
+    const submit = useCallback((updatedValue: string, redirect = false) => {
         if (guide) {
             guide.markdown = updatedValue;
             setFetching(true);
             guide.save().then((result: AnnotationGuide) => {
                 setValue(result.markdown);
                 setGuide(result);
+                if (redirect) {
+                    notification.success({
+                        message: 'Description saved successfully',
+                    });
+                    history.push(`/${instanceType}s/${id}`);
+                }
             }).catch((error: unknown) => {
                 notification.error({
                     message: 'Could not save guide on the server',
@@ -72,7 +79,7 @@ function AnnotationGuidePage(): JSX.Element {
                 setFetching(false);
             });
         }
-    }, [guide]);
+    }, [guide, history, instanceType, id]);
 
     const handleInsertFiles = useCallback(async (files: FileList): Promise<void> => {
         if (mdEditorRef.current && guide?.id) {
@@ -171,7 +178,7 @@ function AnnotationGuidePage(): JSX.Element {
                     <Button
                         type='primary'
                         disabled={fetching || !guide?.id}
-                        onClick={() => submit(value)}
+                        onClick={() => submit(value, true)}
                     >
                         Submit
                     </Button>

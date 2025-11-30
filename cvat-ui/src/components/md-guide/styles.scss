@@ -7,8 +7,62 @@
 .cvat-md-guide-control-wrapper {
     margin-top: $grid-unit-size;
 
-    button {
-        margin-top: $grid-unit-size;
+    .cvat-md-guide-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: $grid-unit-size;
+
+        .cvat-md-guide-edit-icon {
+            margin-left: $grid-unit-size;
+            color: #1677ff;
+            cursor: pointer;
+
+            &:hover {
+                color: #4096ff;
+            }
+        }
+    }
+
+    .cvat-md-guide-content-wrapper {
+        position: relative;
+        width: 100%;
+        background-color: rgba(0, 0, 0, 3%);
+        border-radius: $border-radius-base;
+        padding: $grid-unit-size * 2;
+
+        .cvat-md-guide-content {
+            overflow: hidden;
+            font-size: 14px;
+
+            &.cvat-md-guide-content-collapsed {
+                max-height: 7.5em; // approximately 5 lines
+            }
+
+            &.cvat-md-guide-content-expanded {
+                max-height: none;
+            }
+
+            .wmde-markdown {
+                background-color: transparent;
+                font-size: inherit;
+            }
+        }
+
+        .cvat-md-guide-content-fade {
+            position: absolute;
+            bottom: $grid-unit-size * 5;
+            left: 0;
+            right: 0;
+            height: 3em;
+            background: linear-gradient(transparent, #f8f8f8);
+            pointer-events: none;
+        }
+
+        .cvat-md-guide-expand-button {
+            padding: 0;
+            height: auto;
+            margin-top: $grid-unit-size;
+        }
     }
 }
 
