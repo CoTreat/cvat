@@ -28,7 +28,7 @@ export default function DetailsComponent(props: DetailsComponentProps): JSX.Elem
 
     return (
         <div data-cvat-project-id={project.id} className='cvat-project-details'>
-            <Row>
+            <Row justify='space-between' align='middle'>
                 <Col>
                     <Title
                         level={4}
@@ -44,29 +44,29 @@ export default function DetailsComponent(props: DetailsComponentProps): JSX.Elem
                         {projectName}
                     </Title>
                 </Col>
-            </Row>
-            <Row justify='space-between' className='cvat-project-description'>
-                <Col>
-                    <Text type='secondary'>
-                        {`Project #${project.id} created`}
-                        {project.owner ? ` by ${project.owner.username}` : null}
-                        {` on ${moment(project.createdDate).format('MMMM Do YYYY')}`}
-                    </Text>
-                    <MdGuideControl instanceType='project' id={project.id} />
-                    <BugTrackerEditor
-                        instance={project}
-                        onChange={(bugTracker): void => {
-                            project.bugTracker = bugTracker;
-                            onUpdateProject(project);
-                        }}
-                    />
-                </Col>
                 <Col>
                     <Text type='secondary'>Assigned to</Text>
                     <UserSelector
                         value={project.assignee}
                         onSelect={(user) => {
                             project.assignee = user;
+                            onUpdateProject(project);
+                        }}
+                    />
+                </Col>
+            </Row>
+            <Row className='cvat-project-description'>
+                <Col span={24}>
+                    <Text type='secondary'>
+                        {`Project #${project.id} created`}
+                        {project.owner ? ` by ${project.owner.username}` : null}
+                        {` on ${moment(project.createdDate).format('MMMM Do YYYY')}`}
+                    </Text>
+                    <MdGuideControl instanceType='project' id={project.id} instance={project} />
+                    <BugTrackerEditor
+                        instance={project}
+                        onChange={(bugTracker): void => {
+                            project.bugTracker = bugTracker;
                             onUpdateProject(project);
                         }}
                     />
