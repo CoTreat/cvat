@@ -96,6 +96,7 @@ function JobsPageComponent(): JSX.Element {
                         getJobsAsync({
                             ...query,
                             filter,
+                            search: null,
                             page: 1,
                         }),
                     );
