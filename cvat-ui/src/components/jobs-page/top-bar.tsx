@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Col, Row } from 'antd/lib/grid';
 import Input from 'antd/lib/input';
 
@@ -29,6 +29,11 @@ function TopBarComponent(props: Props): JSX.Element {
         query, onApplyFilter, onApplySorting, onApplySearch,
     } = props;
     const [visibility, setVisibility] = useState(defaultVisibility);
+    const [searchValue, setSearchValue] = useState(query.search || '');
+
+    useEffect(() => {
+        setSearchValue(query.search || '');
+    }, [query.search]);
 
     return (
         <Row className='cvat-jobs-page-top-bar' justify='center' align='middle'>
@@ -36,12 +41,15 @@ function TopBarComponent(props: Props): JSX.Element {
                 <div>
                     <Input.Search
                         enterButton
+                        allowClear
+                        disabled={!!query.filter}
+                        value={searchValue}
+                        onChange={(e) => setSearchValue(e.target.value)}
                         onSearch={(phrase: string) => {
                             onApplySearch(phrase);
                         }}
-                        defaultValue={query.search || ''}
                         className='cvat-jobs-page-search-bar'
-                        placeholder='Search ...'
+                        placeholder={query.filter ? 'Clear filters to search' : 'Search ...'}
                     />
                     <div>
                         <SortingComponent
