@@ -14,7 +14,7 @@ import Popover from 'antd/lib/popover';
 import Title from 'antd/lib/typography/Title';
 import Pagination from 'antd/lib/pagination';
 import { MultiPlusIcon } from 'icons';
-import { PlusOutlined } from '@ant-design/icons';
+import { PlusOutlined, VideoCameraOutlined } from '@ant-design/icons';
 import Empty from 'antd/lib/empty';
 import Input from 'antd/lib/input';
 import notification from 'antd/lib/notification';
@@ -288,9 +288,17 @@ export default function ProjectPageComponent(): JSX.Element {
                                     </Button>
                                     <Button
                                         type='primary'
-                                        icon={<span className='anticon'><MultiPlusIcon /></span>}
+                                        icon={<VideoCameraOutlined />}
                                         className='cvat-create-multi-tasks-button'
                                         onClick={() => history.push(`/tasks/create?projectId=${id}&many=true`)}
+                                    >
+                                        Create video tasks
+                                    </Button>
+                                    <Button
+                                        type='primary'
+                                        icon={<span className='anticon'><MultiPlusIcon /></span>}
+                                        className='cvat-create-multi-tasks-button'
+                                        onClick={() => history.push(`/tasks/create?projectId=${id}&manyFolders=true`)}
                                     >
                                         Create multi tasks
                                     </Button>
