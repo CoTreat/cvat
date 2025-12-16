@@ -991,9 +991,14 @@ class Credentials:
 
 def db_storage_to_storage_instance(db_storage):
     credentials = Credentials()
+    # For KEY_FILE_PATH credentials, use the dynamically computed path
+    # to handle different environments (local dev vs Docker)
+    credential_value = db_storage.credentials
+    if db_storage.credentials_type == CredentialsTypeChoice.KEY_FILE_PATH:
+        credential_value = db_storage.get_key_file_path()
     credentials.convert_from_db({
         'type': db_storage.credentials_type,
-        'value': db_storage.credentials,
+        'value': credential_value,
     })
     details = {
         'resource': db_storage.resource,

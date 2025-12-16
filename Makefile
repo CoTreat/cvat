@@ -20,8 +20,8 @@ VENV := .venv
 PYTHON := $(VENV)/bin/python
 PIP := $(VENV)/bin/pip
 
-# Docker compose files
-COMPOSE := docker compose -f docker-compose.yml -f docker-compose.dev.yml
+# Docker compose files (includes local dev bind mounts)
+COMPOSE := docker compose -f docker-compose.yml -f docker-compose.dev.yml -f docker-compose.local.yml
 
 ##@ Help
 

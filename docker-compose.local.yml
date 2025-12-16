@@ -1,0 +1,56 @@
+# Local development override - DO NOT COMMIT
+# Use bind mount for hybrid development mode
+services:
+  cvat_server:
+    volumes:
+      - ./data:/home/django/data
+      - cvat_keys:/home/django/keys
+      - cvat_logs:/home/django/logs
+
+  cvat_worker_utils:
+    volumes:
+      - ./data:/home/django/data
+      - cvat_keys:/home/django/keys
+      - cvat_logs:/home/django/logs
+
+  cvat_worker_import:
+    volumes:
+      - ./data:/home/django/data
+      - cvat_keys:/home/django/keys
+      - cvat_logs:/home/django/logs
+
+  cvat_worker_export:
+    volumes:
+      - ./data:/home/django/data
+      - cvat_keys:/home/django/keys
+      - cvat_logs:/home/django/logs
+
+  cvat_worker_annotation:
+    volumes:
+      - ./data:/home/django/data
+      - cvat_keys:/home/django/keys
+      - cvat_logs:/home/django/logs
+
+  cvat_worker_webhooks:
+    volumes:
+      - ./data:/home/django/data
+      - cvat_keys:/home/django/keys
+      - cvat_logs:/home/django/logs
+
+  cvat_worker_quality_reports:
+    volumes:
+      - ./data:/home/django/data
+      - cvat_keys:/home/django/keys
+      - cvat_logs:/home/django/logs
+
+  cvat_worker_chunks:
+    volumes:
+      - ./data:/home/django/data
+      - cvat_keys:/home/django/keys
+      - cvat_logs:/home/django/logs
+
+  cvat_worker_consensus:
+    volumes:
+      - ./data:/home/django/data
+      - cvat_keys:/home/django/keys
+      - cvat_logs:/home/django/logs
