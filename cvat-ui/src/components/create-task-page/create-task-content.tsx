@@ -64,6 +64,8 @@ type State = CreateTaskData & {
     uploadFileErrorMessage: string;
     loading: boolean;
     statusInProgressTask: string;
+    currentMultiTaskName: string;
+    currentMultiTaskStatus: string;
 };
 
 const defaultState: State = {
@@ -107,6 +109,8 @@ const defaultState: State = {
     uploadFileErrorMessage: '',
     loading: false,
     statusInProgressTask: '',
+    currentMultiTaskName: '',
+    currentMultiTaskStatus: '',
 };
 
 const UploadFileErrorMessages = {
@@ -618,12 +622,23 @@ class CreateTaskContent extends React.PureComponent<Props & RouteComponentProps,
         if (task.status !== 'pending') return;
 
         await this.setStatusOneOfMultiTasks(index, 'progress');
+        this.setState({
+            currentMultiTaskName: task.basic.name,
+            currentMultiTaskStatus: 'Starting...',
+        });
         try {
-            await onCreate(task);
+            await onCreate(task, (status: string) => {
+                this.setState({ currentMultiTaskStatus: status });
+            });
             await this.setStatusOneOfMultiTasks(index, 'completed');
         } catch (err) {
             console.warn(err);
             await this.setStatusOneOfMultiTasks(index, 'failed');
+        } finally {
+            this.setState({
+                currentMultiTaskName: '',
+                currentMultiTaskStatus: '',
+            });
         }
     };
 
@@ -1081,6 +1096,8 @@ class CreateTaskContent extends React.PureComponent<Props & RouteComponentProps,
             files,
             activeFileManagerTab,
             loading,
+            currentMultiTaskName,
+            currentMultiTaskStatus,
         } = this.state;
         const currentFiles = files[activeFileManagerTab];
         const countPending = items.filter((item) => item.status === 'pending').length;
@@ -1090,6 +1107,8 @@ class CreateTaskContent extends React.PureComponent<Props & RouteComponentProps,
             return (
                 <MultiTasksProgress
                     tasks={items}
+                    currentTaskName={currentMultiTaskName}
+                    statusMessage={currentMultiTaskStatus}
                     onOk={this.handleOkMultiTasks}
                     onCancel={this.handleCancelMultiTasks}
                     onRetryFailedTasks={this.handleRetryFailedMultiTasks}
