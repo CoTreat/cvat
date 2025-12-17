@@ -17,6 +17,7 @@ export interface BaseConfiguration {
 interface Props {
     onChange(values: BaseConfiguration): void;
     many: boolean;
+    manyFolders?: boolean;
     exampleMultiTaskName?: string;
 }
 
@@ -30,8 +31,14 @@ export default class BasicConfigurationForm extends React.PureComponent<Props> {
         this.formRef = React.createRef<FormInstance>();
         this.inputRef = React.createRef<Input>();
 
-        const { many } = this.props;
-        this.initialName = many ? '{{file_name}}' : '';
+        const { many, manyFolders } = this.props;
+        if (manyFolders) {
+            this.initialName = '{{dir_name}}';
+        } else if (many) {
+            this.initialName = '{{file_name}}';
+        } else {
+            this.initialName = '';
+        }
     }
 
     componentDidMount(): void {
@@ -68,13 +75,74 @@ export default class BasicConfigurationForm extends React.PureComponent<Props> {
         }
     }
 
+    private renderTooltipContent(): JSX.Element {
+        const { manyFolders, exampleMultiTaskName } = this.props;
+
+        if (manyFolders) {
+            return (
+                <>
+                    You can use in the template:
+                    <ul>
+                        <li>
+                            some_text - any text
+                        </li>
+                        <li>
+                            {'{{'}
+                            index
+                            {'}}'}
+                            &nbsp;- index of folder in selection
+                        </li>
+                        <li>
+                            {'{{'}
+                            dir_name
+                            {'}}'}
+                            &nbsp;- name of folder
+                        </li>
+                    </ul>
+                    Example:&nbsp;
+                    <i>
+                        {exampleMultiTaskName || 'Task name 1 - folder_name'}
+                    </i>
+                </>
+            );
+        }
+
+        return (
+            <>
+                You can use in the template:
+                <ul>
+                    <li>
+                        some_text - any text
+                    </li>
+                    <li>
+                        {'{{'}
+                        index
+                        {'}}'}
+                        &nbsp;- index file in set
+                    </li>
+                    <li>
+                        {'{{'}
+                        file_name
+                        {'}}'}
+                        &nbsp;- name of file
+                    </li>
+                </ul>
+                Example:&nbsp;
+                <i>
+                    {exampleMultiTaskName || 'Task name 1 - video_1.mp4'}
+                </i>
+            </>
+        );
+    }
+
     public render(): JSX.Element {
-        const { many, exampleMultiTaskName } = this.props;
+        const { many, manyFolders } = this.props;
+        const showTooltip = many || manyFolders;
 
         return (
             <Form ref={this.formRef} layout='vertical'>
                 <Form.Item
-                    className={many ? 'cvat-task-name-field-has-tooltip' : ''}
+                    className={showTooltip ? 'cvat-task-name-field-has-tooltip' : ''}
                     hasFeedback
                     name='name'
                     label={<span>Name</span>}
@@ -91,35 +159,9 @@ export default class BasicConfigurationForm extends React.PureComponent<Props> {
                         onChange={(e) => this.handleChangeName(e)}
                     />
                 </Form.Item>
-                {many ? (
+                {showTooltip ? (
                     <Text type='secondary'>
-                        <Tooltip title={() => (
-                            <>
-                                You can use in the template:
-                                <ul>
-                                    <li>
-                                        some_text - any text
-                                    </li>
-                                    <li>
-                                        {'{{'}
-                                        index
-                                        {'}}'}
-                                        &nbsp;- index file in set
-                                    </li>
-                                    <li>
-                                        {'{{'}
-                                        file_name
-                                        {'}}'}
-                                        &nbsp;- name of file
-                                    </li>
-                                </ul>
-                                Example:&nbsp;
-                                <i>
-                                    {exampleMultiTaskName || 'Task name 1 - video_1.mp4'}
-                                </i>
-                            </>
-                        )}
-                        >
+                        <Tooltip title={() => this.renderTooltipContent()}>
                             When forming the name, a template is used.
                             {' '}
                             <QuestionCircleOutlined />

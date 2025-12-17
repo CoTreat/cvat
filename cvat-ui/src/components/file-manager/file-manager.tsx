@@ -32,6 +32,7 @@ interface State {
 
 interface Props {
     many: boolean;
+    manyFolders?: boolean;
     onChangeActiveKey(key: string): void;
     onUploadLocalFiles(files: File[]): void;
     onUploadRemoteFiles(urls: string[]): void;
@@ -46,6 +47,8 @@ export class FileManager extends React.PureComponent<Props, State> {
         super(props);
         this.cloudStorageTabFormRef = React.createRef<FormInstance>();
 
+        const { manyFolders } = props;
+
         this.state = {
             files: {
                 local: [],
@@ -55,8 +58,17 @@ export class FileManager extends React.PureComponent<Props, State> {
             },
             cloudStorage: null,
             potentialCloudStorage: '',
-            active: 'local',
+            // For manyFolders mode, default to 'share' tab since local files are not supported
+            active: manyFolders ? 'share' : 'local',
         };
+    }
+
+    public componentDidMount(): void {
+        const { manyFolders, onChangeActiveKey } = this.props;
+        // Notify parent about initial tab when in manyFolders mode
+        if (manyFolders) {
+            onChangeActiveKey('share');
+        }
     }
 
     private handleUploadCloudStorageFiles = (
@@ -215,13 +227,28 @@ export class FileManager extends React.PureComponent<Props, State> {
     }
 
     public render(): JSX.Element {
-        const { onChangeActiveKey } = this.props;
+        const { onChangeActiveKey, manyFolders } = this.props;
         const { active } = this.state;
+
+        // For manyFolders mode, only show Share and Cloud Storage tabs
+        // since folders can only be selected from remote storage
+        const items = manyFolders ? [
+            this.renderShareSelector(),
+            this.renderCloudStorageSelector(),
+        ] : [
+            this.renderLocalSelector(),
+            this.renderShareSelector(),
+            this.renderRemoteSelector(),
+            this.renderCloudStorageSelector(),
+        ];
+
+        // Set default active tab for manyFolders mode
+        const defaultActive = manyFolders && active === 'local' ? 'share' : active;
 
         return (
             <Tabs
                 type='card'
-                activeKey={active}
+                activeKey={defaultActive}
                 tabBarGutter={5}
                 onChange={(activeKey: string): void => {
                     onChangeActiveKey(activeKey);
@@ -229,12 +256,7 @@ export class FileManager extends React.PureComponent<Props, State> {
                         active: activeKey as any,
                     });
                 }}
-                items={[
-                    this.renderLocalSelector(),
-                    this.renderShareSelector(),
-                    this.renderRemoteSelector(),
-                    this.renderCloudStorageSelector(),
-                ]}
+                items={items}
             />
         );
     }

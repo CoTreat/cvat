@@ -9,7 +9,9 @@ import { useHistory } from 'react-router';
 
 import { Row, Col } from 'antd/lib/grid';
 import Popover from 'antd/lib/popover';
-import { LoadingOutlined, PlusOutlined, UploadOutlined } from '@ant-design/icons';
+import {
+    LoadingOutlined, PlusOutlined, UploadOutlined, VideoCameraOutlined,
+} from '@ant-design/icons';
 import Button from 'antd/lib/button';
 import Input from 'antd/lib/input';
 import { importActions } from 'actions/import-actions';
@@ -110,6 +112,14 @@ export default function TopBarComponent(props: VisibleTopBarProps): JSX.Element 
                                     className='cvat-create-multi-tasks-button'
                                     type='primary'
                                     onClick={(): void => history.push('/tasks/create?many=true')}
+                                    icon={<VideoCameraOutlined />}
+                                >
+                                    Create video tasks
+                                </Button>
+                                <Button
+                                    className='cvat-create-multi-tasks-button'
+                                    type='primary'
+                                    onClick={(): void => history.push('/tasks/create?manyFolders=true')}
                                     icon={<span className='anticon'><MultiPlusIcon /></span>}
                                 >
                                     Create multi tasks

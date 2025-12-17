@@ -26,13 +26,25 @@ export default function CreateTaskPage(props: Props): JSX.Element {
         projectId = +(params.get('projectId') as string);
     }
     const many = params.get('many') === 'true';
+    const manyFolders = params.get('manyFolders') === 'true';
     const handleCreate: typeof onCreate = (...onCreateParams) => onCreate(...onCreateParams);
+
+    const getTitle = (): string => {
+        if (many) return 'Create multi tasks for video files';
+        if (manyFolders) return 'Create multi tasks for image folders';
+        return 'Create a new task';
+    };
 
     return (
         <Row justify='center' align='top' className='cvat-create-work-form-wrapper'>
             <Col md={20} lg={16} xl={14} xxl={9}>
-                <Text className='cvat-title'>Create a new task</Text>
-                <CreateTaskContent projectId={projectId} onCreate={handleCreate} many={many} />
+                <Text className='cvat-title'>{getTitle()}</Text>
+                <CreateTaskContent
+                    projectId={projectId}
+                    onCreate={handleCreate}
+                    many={many}
+                    manyFolders={manyFolders}
+                />
             </Col>
         </Row>
     );

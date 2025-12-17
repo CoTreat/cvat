@@ -54,6 +54,7 @@ interface Props {
     onCreate: (data: CreateTaskData, onProgress?: (status: string, progress?: number) => void) => Promise<any>;
     projectId: number | null;
     many: boolean;
+    manyFolders: boolean;
 }
 
 type State = CreateTaskData & {
@@ -63,6 +64,8 @@ type State = CreateTaskData & {
     uploadFileErrorMessage: string;
     loading: boolean;
     statusInProgressTask: string;
+    currentMultiTaskName: string;
+    currentMultiTaskStatus: string;
 };
 
 const defaultState: State = {
@@ -106,11 +109,14 @@ const defaultState: State = {
     uploadFileErrorMessage: '',
     loading: false,
     statusInProgressTask: '',
+    currentMultiTaskName: '',
+    currentMultiTaskStatus: '',
 };
 
 const UploadFileErrorMessages = {
     one: 'Wrong list of files. You can upload an archive with images, a video, a pdf file or multiple images. ',
     multi: 'Wrong list of files. You can upload one or more videos. ',
+    multiFolders: 'Wrong selection. You must select one or more folders containing images. ',
 };
 
 function receiveExtensions(files: RemoteFile[]): string[] {
@@ -131,11 +137,26 @@ function checkFiles(files: RemoteFile[], type: SupportedShareTypes, baseError: s
     return '';
 }
 
-function validateRemoteFiles(remoteFiles: RemoteFile[], many: boolean): string {
+function validateRemoteFiles(remoteFiles: RemoteFile[], many: boolean, manyFolders: boolean): string {
     let uploadFileErrorMessage = '';
+
+    // Skip validation if no files are selected yet
+    if (remoteFiles.length === 0) {
+        return uploadFileErrorMessage;
+    }
+
     const regFiles = remoteFiles.filter((file) => file.type === 'REG');
+    const dirFiles = remoteFiles.filter((file) => file.type === 'DIR');
     const excludedManifests = regFiles.filter((file) => !file.key.endsWith('.jsonl'));
-    if (!many && excludedManifests.length > 1) {
+
+    if (manyFolders) {
+        // For manyFolders mode, only directories should be selected
+        if (dirFiles.length === 0) {
+            uploadFileErrorMessage = UploadFileErrorMessages.multiFolders;
+        } else if (regFiles.length > 0) {
+            uploadFileErrorMessage = 'Please select only folders, not individual files.';
+        }
+    } else if (!many && excludedManifests.length > 1) {
         uploadFileErrorMessage = checkFiles(
             excludedManifests,
             SupportedShareTypes.IMAGE,
@@ -151,7 +172,10 @@ function validateRemoteFiles(remoteFiles: RemoteFile[], many: boolean): string {
     return uploadFileErrorMessage;
 }
 
-function filterFiles(remoteFiles: RemoteFile[], many: boolean): RemoteFile[] {
+function filterFiles(remoteFiles: RemoteFile[], many: boolean, manyFolders: boolean): RemoteFile[] {
+    if (manyFolders) {
+        return remoteFiles.filter((file: RemoteFile) => file.type === 'DIR');
+    }
     if (many) {
         return remoteFiles.filter((file: RemoteFile) => file.mimeType === 'video');
     }
@@ -408,9 +432,9 @@ class CreateTaskContent extends React.PureComponent<Props & RouteComponentProps,
 
     private handleUploadShareFiles = (shareFiles: RemoteFile[]): void => {
         const { files } = this.state;
-        const { many } = this.props;
-        const uploadFileErrorMessage = validateRemoteFiles(shareFiles, many);
-        const filteredFiles = filterFiles(shareFiles, many);
+        const { many, manyFolders } = this.props;
+        const uploadFileErrorMessage = validateRemoteFiles(shareFiles, many, manyFolders);
+        const filteredFiles = filterFiles(shareFiles, many, manyFolders);
         this.setState({ uploadFileErrorMessage });
 
         if (!uploadFileErrorMessage) {
@@ -425,9 +449,9 @@ class CreateTaskContent extends React.PureComponent<Props & RouteComponentProps,
 
     private handleUploadCloudStorageFiles = (cloudStorageFiles: RemoteFile[]): void => {
         const { files } = this.state;
-        const { many } = this.props;
-        const uploadFileErrorMessage = validateRemoteFiles(cloudStorageFiles, many);
-        const filteredFiles = filterFiles(cloudStorageFiles, many);
+        const { many, manyFolders } = this.props;
+        const uploadFileErrorMessage = validateRemoteFiles(cloudStorageFiles, many, manyFolders);
+        const filteredFiles = filterFiles(cloudStorageFiles, many, manyFolders);
         this.setState({ uploadFileErrorMessage });
 
         if (!uploadFileErrorMessage) {
@@ -598,12 +622,23 @@ class CreateTaskContent extends React.PureComponent<Props & RouteComponentProps,
         if (task.status !== 'pending') return;
 
         await this.setStatusOneOfMultiTasks(index, 'progress');
+        this.setState({
+            currentMultiTaskName: task.basic.name,
+            currentMultiTaskStatus: 'Starting...',
+        });
         try {
-            await onCreate(task);
+            await onCreate(task, (status: string) => {
+                this.setState({ currentMultiTaskStatus: status });
+            });
             await this.setStatusOneOfMultiTasks(index, 'completed');
         } catch (err) {
             console.warn(err);
             await this.setStatusOneOfMultiTasks(index, 'failed');
+        } finally {
+            this.setState({
+                currentMultiTaskName: '',
+                currentMultiTaskStatus: '',
+            });
         }
     };
 
@@ -627,7 +662,18 @@ class CreateTaskContent extends React.PureComponent<Props & RouteComponentProps,
         this.stopLoading();
     };
 
+    /**
+     * Creates multi-task entries from selected files or folders.
+     * Supports two modes:
+     * - Video mode (many=true): Each video file becomes a separate task
+     * - Folder mode (manyFolders=true): Each folder becomes a separate task containing all images within
+     *
+     * Task naming uses placeholders:
+     * - Video mode: {{file_name}}, {{index}}
+     * - Folder mode: {{dir_name}}, {{index}}
+     */
     private addMultiTasks = async (): Promise<void> => new Promise((resolve) => {
+        const { manyFolders } = this.props;
         const {
             projectId,
             subset,
@@ -639,13 +685,17 @@ class CreateTaskContent extends React.PureComponent<Props & RouteComponentProps,
             cloudStorageId,
         } = this.state;
 
-        const files: (File | string)[] = allFiles[activeFileManagerTab];
+        // Files array contains either video file paths or folder paths depending on mode
+        const items: (File | string)[] = allFiles[activeFileManagerTab];
 
         this.setState({
-            multiTasks: files.map((file, index) => ({
+            multiTasks: items.map((item, index) => ({
                 projectId,
                 basic: {
-                    name: this.getTaskName(index, activeFileManagerTab),
+                    // Use appropriate naming function based on mode
+                    name: manyFolders ?
+                        this.getFolderTaskName(index, item as string) :
+                        this.getTaskName(index, activeFileManagerTab),
                 },
                 subset,
                 advanced,
@@ -653,13 +703,13 @@ class CreateTaskContent extends React.PureComponent<Props & RouteComponentProps,
                 labels,
                 files: {
                     ...defaultState.files,
-                    [activeFileManagerTab]: [file],
+                    // Pass the file/folder path - backend handles accordingly
+                    [activeFileManagerTab]: [item],
                 },
                 activeFileManagerTab,
                 cloudStorageId,
                 status: 'pending',
-            }
-            )),
+            })),
         }, resolve);
     });
 
@@ -786,15 +836,32 @@ class CreateTaskContent extends React.PureComponent<Props & RouteComponentProps,
             basic.name;
     };
 
+    private getFolderTaskName = (index: number, folderPath: string, defaultDirName = ''): string => {
+        const { basic } = this.state;
+        // Extract folder name from path (e.g., "images/folder1/" -> "folder1")
+        const parts = folderPath.replace(/\/$/, '').split('/');
+        const dirName = parts[parts.length - 1] || defaultDirName;
+
+        return basic.name
+            .replaceAll('{{dir_name}}', dirName)
+            .replaceAll('{{index}}', index.toString());
+    };
+
     private renderBasicBlock(): JSX.Element {
-        const { many } = this.props;
-        const exampleMultiTaskName = many ? this.getTaskName(0, 'local', 'fileName.mp4') : '';
+        const { many, manyFolders } = this.props;
+        let exampleMultiTaskName = '';
+        if (many) {
+            exampleMultiTaskName = this.getTaskName(0, 'local', 'fileName.mp4');
+        } else if (manyFolders) {
+            exampleMultiTaskName = this.getFolderTaskName(0, 'example_folder/', 'folderName');
+        }
 
         return (
             <Col span={24}>
                 <BasicConfigurationForm
                     ref={this.basicConfigurationComponent}
                     many={many}
+                    manyFolders={manyFolders}
                     exampleMultiTaskName={exampleMultiTaskName}
                     onChange={this.handleChangeBasicConfiguration}
                 />
@@ -874,16 +941,22 @@ class CreateTaskContent extends React.PureComponent<Props & RouteComponentProps,
     }
 
     private renderFilesBlock(): JSX.Element {
-        const { many } = this.props;
+        const { many, manyFolders } = this.props;
         const { uploadFileErrorMessage } = this.state;
+
+        const getFilesLabel = (): string => {
+            if (manyFolders) return 'Select folders';
+            return 'Select files';
+        };
 
         return (
             <>
                 <Col span={24}>
                     <Text type='danger'>* </Text>
-                    <Text className='cvat-text-color'>Select files</Text>
+                    <Text className='cvat-text-color'>{getFilesLabel()}</Text>
                     <FileManagerComponent
                         many={many}
+                        manyFolders={manyFolders}
                         onChangeActiveKey={this.changeFileManagerTab}
                         onUploadLocalFiles={this.handleUploadLocalFiles}
                         onUploadRemoteFiles={this.handleUploadRemoteFiles}
@@ -1023,6 +1096,8 @@ class CreateTaskContent extends React.PureComponent<Props & RouteComponentProps,
             files,
             activeFileManagerTab,
             loading,
+            currentMultiTaskName,
+            currentMultiTaskStatus,
         } = this.state;
         const currentFiles = files[activeFileManagerTab];
         const countPending = items.filter((item) => item.status === 'pending').length;
@@ -1032,6 +1107,8 @@ class CreateTaskContent extends React.PureComponent<Props & RouteComponentProps,
             return (
                 <MultiTasksProgress
                     tasks={items}
+                    currentTaskName={currentMultiTaskName}
+                    statusMessage={currentMultiTaskStatus}
                     onOk={this.handleOkMultiTasks}
                     onCancel={this.handleCancelMultiTasks}
                     onRetryFailedTasks={this.handleRetryFailedMultiTasks}
@@ -1060,7 +1137,7 @@ class CreateTaskContent extends React.PureComponent<Props & RouteComponentProps,
     }
 
     public render(): JSX.Element {
-        const { many } = this.props;
+        const { many, manyFolders } = this.props;
 
         return (
             <Row justify='start' align='middle' className='cvat-create-task-content'>
@@ -1077,7 +1154,7 @@ class CreateTaskContent extends React.PureComponent<Props & RouteComponentProps,
                 {this.renderQualityBlock()}
 
                 <Col span={24} className='cvat-create-task-content-footer'>
-                    {many ? this.renderFooterMultiTasks() : this.renderFooterSingleTask() }
+                    {(many || manyFolders) ? this.renderFooterMultiTasks() : this.renderFooterSingleTask() }
                 </Col>
             </Row>
         );

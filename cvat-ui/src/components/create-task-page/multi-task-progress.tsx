@@ -11,9 +11,13 @@ import Button from 'antd/lib/button';
 import Collapse from 'antd/lib/collapse';
 import Text from 'antd/lib/typography/Text';
 import List from 'antd/lib/list';
+import Spin from 'antd/lib/spin';
+import { LoadingOutlined } from '@ant-design/icons';
 
 interface Props {
     tasks: any[];
+    currentTaskName?: string;
+    statusMessage?: string;
     onCancel: () => void;
     onOk: () => void;
     onRetryFailedTasks: () => void;
@@ -23,12 +27,15 @@ interface Props {
 export default function MultiTasksProgress(props: Props): JSX.Element {
     const {
         tasks: items,
+        currentTaskName,
+        statusMessage,
         onOk,
         onCancel,
         onRetryFailedTasks,
         onRetryCancelledTasks,
     } = props;
     let alertType: any = 'info';
+    const spinIcon = <LoadingOutlined style={{ fontSize: 16 }} spin />;
 
     const countPending = items.filter((item) => item.status === 'pending').length;
     const countProgress = items.filter((item) => item.status === 'progress').length;
@@ -69,7 +76,23 @@ export default function MultiTasksProgress(props: Props): JSX.Element {
                                 Finished
                             </Col>
                         </Row>
-                    ) : null}
+                    ) : (
+                        <Row className='cvat-create-multi-tasks-state' style={{ marginBottom: 8 }}>
+                            <Col>
+                                <Spin indicator={spinIcon} />
+                                <Text style={{ marginLeft: 8 }}>
+                                    {currentTaskName ? `Creating task: ${currentTaskName}` : 'Processing...'}
+                                </Text>
+                            </Col>
+                            {statusMessage && (
+                                <Col span={24} style={{ marginTop: 4 }}>
+                                    <Text type='secondary' style={{ fontSize: 12 }}>
+                                        {statusMessage}
+                                    </Text>
+                                </Col>
+                            )}
+                        </Row>
+                    )}
                     <Row className='cvat-create-multi-tasks-progress'>
                         <Col>
                             {`Pending: ${countPending} `}

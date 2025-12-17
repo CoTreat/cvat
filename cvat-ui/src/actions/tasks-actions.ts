@@ -290,11 +290,9 @@ ThunkAction {
                 updateStatusCallback(updateData: Request | UpdateStatusData) {
                     let { message } = updateData;
                     const { status, progress } = updateData;
-                    let helperMessage = '';
                     if (!message) {
                         if ([RQStatus.QUEUED, RQStatus.STARTED].includes(status)) {
                             message = 'CVAT queued the task to import';
-                            helperMessage = 'You may close the window.';
                         } else if (status === RQStatus.FAILED) {
                             message = 'Images processing failed';
                         } else if (status === RQStatus.FINISHED) {
@@ -303,7 +301,7 @@ ThunkAction {
                             message = 'Unknown status received';
                         }
                     }
-                    onProgress?.(`${message} ${progress ? `${Math.floor(progress * 100)}%` : ''}. ${helperMessage}`);
+                    onProgress?.(`${message}${progress ? ` ${Math.floor(progress * 100)}%` : ''}`);
                     if (updateData instanceof Request) updateRequestProgress(updateData, dispatch);
                 },
             });
