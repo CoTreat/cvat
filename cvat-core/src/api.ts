@@ -390,6 +390,22 @@ function build(): CVATCore {
             },
         },
         analytics: {
+            // old feature from v2.30.0
+            // this is cotreat cvat version copied from old cvat version
+            performance: {
+                async reports(filter = {}) {
+                    const result = await PluginRegistry.apiWrapper(cvat.analytics.performance.reports, filter);
+                    return result;
+                },
+                async calculate(body, onUpdate) {
+                    const result = await PluginRegistry.apiWrapper(
+                        cvat.analytics.performance.calculate,
+                        body,
+                        onUpdate,
+                    );
+                    return result;
+                },
+            },
             events: {
                 async export(filter = {}) {
                     const result = await PluginRegistry.apiWrapper(cvat.analytics.events.export, filter);

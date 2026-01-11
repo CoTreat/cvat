@@ -163,6 +163,14 @@ export default interface CVATCore {
             getJobHistory: (jobId: number) => Promise<any[]>;
             getAssignmentNotifications: (limit?: number) => Promise<any[]>;
         };
+
+        performance: {
+            reports: (filter: AnalyticsReportFilter) => Promise<AnalyticsReport>;
+            calculate: (
+                body: { jobID?: number; taskID?: number; projectID?: number; },
+                onUpdate: (status: enums.RQStatus, progress: number, message: string) => void,
+            ) => Promise<void>;
+        };
     };
     frames: {
         getMeta: any;
